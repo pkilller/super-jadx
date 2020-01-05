@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import jadx.core.dex.instructions.args.RegisterArg;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -295,6 +296,46 @@ public class ClassNode extends LineAttrNode implements ILoadable, ICodeNode {
 	public List<MethodNode> getMethods() {
 		return methods;
 	}
+
+	public MethodNode getMethodByPrototype(String name, ArgType ret, List<RegisterArg> args) {
+		for (MethodNode method: methods) {
+			if (compareMethodPrototype(name, ret, args, method)) {
+				return method;
+			}
+		}
+		return null;
+	}
+
+	private boolean compareMethodPrototype(String name, ArgType ret, List<RegisterArg> args, MethodNode method2) {
+		if (!method2.getName().equals(name)) {
+			return false;
+		}
+		if (method2.getReturnType() == null) {
+			try {
+				method2.load();
+			} catch (DecodeException e) {
+				e.printStackTrace();
+			}
+		}
+		if (!method2.getReturnType().equals(ret)) {
+			return false;
+		}
+
+		List<RegisterArg> method2Args = method2.getArguments(false);
+		if (args.size() != method2Args.size()) {
+			return false;
+		}
+
+		for(int i = 0; i < args.size(); i++) {
+			ArgType method1Arg = args.get(i).getInitType();
+			ArgType method2Arg = method2Args.get(i).getInitType();
+			if (!method1Arg.equals( method2Arg )) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 
 	public List<FieldNode> getFields() {
 		return fields;
