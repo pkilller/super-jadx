@@ -203,7 +203,8 @@ public class JadxArgs {
 	}
 
 	public boolean isDeobfuscationOn() {
-		return deobfuscationOn;
+		return true;
+		// return deobfuscationOn;
 	}
 
 	public void setDeobfuscationOn(boolean deobfuscationOn) {
@@ -215,7 +216,8 @@ public class JadxArgs {
 	}
 
 	public void setDeobfuscationForceSave(boolean deobfuscationForceSave) {
-		this.deobfuscationForceSave = deobfuscationForceSave;
+		// this.deobfuscationForceSave = deobfuscationForceSave;
+		this.deobfuscationForceSave = false;
 	}
 
 	public boolean isUseSourceNameAsClassAlias() {
