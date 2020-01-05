@@ -12,6 +12,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import jadx.api.JadxDecompiler;
+import jadx.core.dex.info.VarInfo;
+import jadx.core.dex.nodes.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -25,10 +28,6 @@ import jadx.core.dex.info.ClassInfo;
 import jadx.core.dex.info.FieldInfo;
 import jadx.core.dex.info.MethodInfo;
 import jadx.core.dex.instructions.args.ArgType;
-import jadx.core.dex.nodes.ClassNode;
-import jadx.core.dex.nodes.DexNode;
-import jadx.core.dex.nodes.FieldNode;
-import jadx.core.dex.nodes.MethodNode;
 
 public class Deobfuscator {
 	private static final Logger LOG = LoggerFactory.getLogger(Deobfuscator.class);
@@ -46,6 +45,7 @@ public class Deobfuscator {
 	private final Map<ClassInfo, DeobfClsInfo> clsMap = new LinkedHashMap<>();
 	private final Map<FieldInfo, String> fldMap = new HashMap<>();
 	private final Map<MethodInfo, String> mthMap = new HashMap<>();
+	private final Map<VarInfo, String> varMap = new HashMap<>();
 
 	private final Map<MethodInfo, OverridedMethodsNode> ovrdMap = new HashMap<>();
 	private final List<OverridedMethodsNode> ovrd = new ArrayList<>();
@@ -62,6 +62,7 @@ public class Deobfuscator {
 	private int clsIndex = 0;
 	private int fldIndex = 0;
 	private int mthIndex = 0;
+	private int varIndex = 0;
 
 	public Deobfuscator(JadxArgs args, @NotNull List<DexNode> dexNodes, Path deobfMapFile) {
 		this.args = args;
@@ -77,6 +78,7 @@ public class Deobfuscator {
 	public void execute() {
 		if (!args.isDeobfuscationForceSave()) {
 			deobfPresets.load();
+			updateVarsDeobs();
 			initIndexes();
 		}
 		process();
@@ -84,6 +86,10 @@ public class Deobfuscator {
 
 	public void savePresets() {
 		deobfPresets.save(args.isDeobfuscationForceSave());
+	}
+
+	public void savePresets(boolean isDeobfuscationForceSave) {
+		deobfPresets.save(isDeobfuscationForceSave);
 	}
 
 	public void clear() {
@@ -96,11 +102,16 @@ public class Deobfuscator {
 		ovrdMap.clear();
 	}
 
+	public void updateVarsDeobs() {
+		JadxDecompiler.instance.setVarsDeobsMap(deobfPresets.getVarPresetMap());
+	}
+
 	private void initIndexes() {
 		pkgIndex = pkgSet.size();
 		clsIndex = deobfPresets.getClsPresetMap().size();
 		fldIndex = deobfPresets.getFldPresetMap().size();
 		mthIndex = deobfPresets.getMthPresetMap().size();
+		varIndex = deobfPresets.getVarPresetMap().size();
 	}
 
 	private void preProcess() {
@@ -230,6 +241,7 @@ public class Deobfuscator {
 		DeobfClsInfo deobfClsInfo = clsMap.get(clsInfo);
 		if (deobfClsInfo != null) {
 			clsInfo.changeShortName(deobfClsInfo.getAlias());
+			clsInfo.setAliasFromPreset(true);
 			PackageNode pkgNode = deobfClsInfo.getPkg();
 			if (!clsInfo.isInner() && pkgNode.hasAnyAlias()) {
 				clsInfo.changePkg(pkgNode.getFullAlias());
@@ -386,6 +398,7 @@ public class Deobfuscator {
 		}
 		PackageNode pkg = getPackageNode(classInfo.getPackage(), true);
 		clsMap.put(classInfo, new DeobfClsInfo(this, cls, pkg, alias));
+		classInfo.setAliasFromPreset(true);
 		return alias;
 	}
 
@@ -430,6 +443,7 @@ public class Deobfuscator {
 		alias = deobfPresets.getForFld(fieldInfo);
 		if (alias != null) {
 			fldMap.put(fieldInfo, alias);
+			fieldInfo.setAliasFromPreset(true);
 			return alias;
 		}
 		if (shouldRename(field.getName())) {
@@ -460,16 +474,65 @@ public class Deobfuscator {
 		return null;
 	}
 
+	@Nullable
+	private String getVarAlias(VarNode var) {
+		VarInfo varInfo = var.getVarInfo();
+
+		String alias = varMap.get(varInfo);
+		if (alias != null) {
+			return alias;
+		}
+		alias = deobfPresets.getForVar(varInfo);
+		if (alias != null) {
+			varMap.put(varInfo, alias);
+			varInfo.setAliasFromPreset(true);
+			return alias;
+		}
+		return null;
+	}
+
 	public String makeFieldAlias(FieldNode field) {
 		String alias = String.format("f%d%s", fldIndex++, prepareNamePart(field.getName()));
 		fldMap.put(field.getFieldInfo(), alias);
+		field.getFieldInfo().setAliasFromPreset(true);
 		return alias;
 	}
 
 	public String makeMethodAlias(MethodNode mth) {
 		String alias = String.format("m%d%s", mthIndex++, prepareNamePart(mth.getName()));
 		mthMap.put(mth.getMethodInfo(), alias);
+		mth.getMethodInfo().setAliasFromPreset(true);
 		return alias;
+	}
+
+	public void setClsAlias(ClassNode cls, String alias) {
+		ClassInfo classInfo = cls.getClassInfo();
+		PackageNode pkg = getPackageNode(classInfo.getPackage(), true);
+		clsMap.put(classInfo, new DeobfClsInfo(this, cls, pkg, alias));
+		deobfPresets.getClsPresetMap().put(classInfo.makeRawFullName(), alias);
+		classInfo.setAliasFromPreset(true);
+		classInfo.changeShortName(alias);
+	}
+
+	public void setFieldAlias(FieldNode field, String alias) {
+		fldMap.put(field.getFieldInfo(), alias);
+		deobfPresets.getFldPresetMap().put(field.getFieldInfo().getRawFullId(), alias);
+		field.getFieldInfo().setAliasFromPreset(true);
+		field.getFieldInfo().setAlias(alias);
+	}
+
+	public void setMthAlias(MethodNode mth, String alias) {
+		mthMap.put(mth.getMethodInfo(), alias);
+		deobfPresets.getMthPresetMap().put(mth.getMethodInfo().getRawFullId(), alias);
+		mth.getMethodInfo().setAliasFromPreset(true);
+		mth.getMethodInfo().setAlias(alias);
+	}
+
+	public void setVarAlias(VarNode var, String alias) {
+		varMap.put(var.getVarInfo(), alias);
+		deobfPresets.getVarPresetMap().put(var.getVarInfo().getRawFullId(), alias);
+		var.getVarInfo().setAliasFromPreset(true);
+		var.getVarInfo().setAlias(alias);
 	}
 
 	private void doPkg(PackageNode pkg, String fullName) {
@@ -561,6 +624,10 @@ public class Deobfuscator {
 
 	public Map<MethodInfo, String> getMthMap() {
 		return mthMap;
+	}
+
+	public Map<VarInfo, String> getVarMap() {
+		return varMap;
 	}
 
 	public PackageNode getRootPackage() {
