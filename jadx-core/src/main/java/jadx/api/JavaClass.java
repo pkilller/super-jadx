@@ -88,12 +88,12 @@ public final class JavaClass implements JavaNode {
 		if (inClsCount != 0) {
 			List<JavaClass> list = new ArrayList<>(inClsCount);
 			for (ClassNode inner : cls.getInnerClasses()) {
-				if (!inner.contains(AFlag.DONT_GENERATE)) {
-					JavaClass javaClass = new JavaClass(inner, this);
-					javaClass.load();
-					list.add(javaClass);
-					rootDecompiler.getClassesMap().put(inner, javaClass);
-				}
+				//if (!inner.contains(AFlag.DONT_GENERATE)) {
+				JavaClass javaClass = new JavaClass(inner, this);
+				javaClass.load();
+				list.add(javaClass);
+				rootDecompiler.getClassesMap().put(inner, javaClass);
+				//}
 			}
 			this.innerClasses = Collections.unmodifiableList(list);
 		}
@@ -102,11 +102,11 @@ public final class JavaClass implements JavaNode {
 		if (fieldsCount != 0) {
 			List<JavaField> flds = new ArrayList<>(fieldsCount);
 			for (FieldNode f : cls.getFields()) {
-				if (!f.contains(AFlag.DONT_GENERATE)) {
-					JavaField javaField = new JavaField(f, this);
-					flds.add(javaField);
-					rootDecompiler.getFieldsMap().put(f, javaField);
-				}
+				//if (!f.contains(AFlag.DONT_GENERATE)) {
+				JavaField javaField = new JavaField(f, this);
+				flds.add(javaField);
+				rootDecompiler.getFieldsMap().put(f, javaField);
+				//}
 			}
 			this.fields = Collections.unmodifiableList(flds);
 		}
@@ -115,11 +115,11 @@ public final class JavaClass implements JavaNode {
 		if (methodsCount != 0) {
 			List<JavaMethod> mths = new ArrayList<>(methodsCount);
 			for (MethodNode m : cls.getMethods()) {
-				if (!m.contains(AFlag.DONT_GENERATE)) {
-					JavaMethod javaMethod = new JavaMethod(this, m);
-					mths.add(javaMethod);
-					rootDecompiler.getMethodsMap().put(m, javaMethod);
-				}
+				//if (!m.contains(AFlag.DONT_GENERATE)) {
+				JavaMethod javaMethod = new JavaMethod(this, m);
+				mths.add(javaMethod);
+				rootDecompiler.getMethodsMap().put(m, javaMethod);
+				//}
 			}
 			mths.sort(Comparator.comparing(JavaMethod::getName));
 			this.methods = Collections.unmodifiableList(mths);
@@ -133,7 +133,7 @@ public final class JavaClass implements JavaNode {
 		return decompiler;
 	}
 
-	private Map<CodePosition, Object> getCodeAnnotations() {
+	public Map<CodePosition, Object> getCodeAnnotations() {
 		decompile();
 		CodeWriter code = cls.getCode();
 		if (code == null) {
