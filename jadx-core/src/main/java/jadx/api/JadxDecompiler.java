@@ -77,6 +77,7 @@ public final class JadxDecompiler {
 	private Map<MethodNode, JavaMethod> methodsMap = new ConcurrentHashMap<>();
 	private Map<FieldNode, JavaField> fieldsMap = new ConcurrentHashMap<>();
 	private Map<VarNode, JavaVar> varsMap = new ConcurrentHashMap<>();
+	private Map<String, String> varsDeobsMap = new ConcurrentHashMap<>();
 
 	static public JadxDecompiler instance = null;
 
@@ -404,6 +405,14 @@ public final class JadxDecompiler {
 			return javaVar;
 		}
 		return null;
+	}
+
+	public void setVarsDeobsMap(Map<String, String> map) {
+		varsDeobsMap = map;
+	}
+
+	public Map<String, String> getVarsDeobsMap() {
+		return varsDeobsMap;
 	}
 
 	public JadxArgs getArgs() {
