@@ -260,7 +260,8 @@ public class JadxCLIArgs {
 	}
 
 	public boolean isDeobfuscationOn() {
-		return deobfuscationOn;
+		return true;
+		// return deobfuscationOn;
 	}
 
 	public int getDeobfuscationMinLength() {
