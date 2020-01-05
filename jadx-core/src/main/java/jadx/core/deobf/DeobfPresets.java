@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import jadx.core.dex.info.VarInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,7 @@ class DeobfPresets {
 	private final Map<String, String> clsPresetMap = new HashMap<>();
 	private final Map<String, String> fldPresetMap = new HashMap<>();
 	private final Map<String, String> mthPresetMap = new HashMap<>();
+	private final Map<String, String> varPresetMap = new HashMap<>();
 
 	public DeobfPresets(Deobfuscator deobfuscator, Path deobfMapFile) {
 		this.deobfuscator = deobfuscator;
@@ -65,6 +67,8 @@ class DeobfPresets {
 					fldPresetMap.put(origName, alias);
 				} else if (l.startsWith("m ")) {
 					mthPresetMap.put(origName, alias);
+				} else if (l.startsWith("v ")) {
+					varPresetMap.put(origName, alias);
 				}
 			}
 		} catch (IOException e) {
@@ -124,6 +128,9 @@ class DeobfPresets {
 		for (MethodInfo mth : deobfuscator.getMthMap().keySet()) {
 			list.add(String.format("m %s = %s", mth.getRawFullId(), mth.getAlias()));
 		}
+		for (VarInfo var : deobfuscator.getVarMap().keySet()) {
+			list.add(String.format("v %s = %s", var.getRawFullId(), var.getAlias()));
+		}
 		Collections.sort(list);
 		Files.write(deobfMapFile, list, MAP_FILE_CHARSET);
 		if (LOG.isDebugEnabled()) {
@@ -152,6 +159,10 @@ class DeobfPresets {
 		return mthPresetMap.get(mth.getRawFullId());
 	}
 
+	public String getForVar(VarInfo var) {
+		return varPresetMap.get(var.getRawFullId());
+	}
+
 	public void clear() {
 		clsPresetMap.clear();
 		fldPresetMap.clear();
@@ -168,5 +179,9 @@ class DeobfPresets {
 
 	public Map<String, String> getMthPresetMap() {
 		return mthPresetMap;
+	}
+
+	public Map<String, String> getVarPresetMap() {
+		return varPresetMap;
 	}
 }
