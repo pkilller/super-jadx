@@ -46,6 +46,7 @@ public class ClassNode extends LineAttrNode implements ILoadable, ICodeNode {
 	private AccessInfo accessFlags;
 	private ArgType superClass;
 	private List<ArgType> interfaces;
+	private List<ClassNode> implements_;  // sub
 	private Map<ArgType, List<ArgType>> genericMap;
 
 	private final List<MethodNode> methods;
@@ -58,6 +59,7 @@ public class ClassNode extends LineAttrNode implements ILoadable, ICodeNode {
 	private String smali;
 	// store parent for inner classes or 'this' otherwise
 	private ClassNode parentClass;
+	private List<ClassNode> subClasses;
 
 	private ProcessState state = ProcessState.NOT_LOADED;
 	private List<ClassNode> dependencies = Collections.emptyList();
@@ -125,6 +127,8 @@ public class ClassNode extends LineAttrNode implements ILoadable, ICodeNode {
 				accFlagsValue = cls.getAccessFlags();
 			}
 			this.accessFlags = new AccessInfo(accFlagsValue, AFType.CLASS);
+			this.subClasses = new ArrayList<>();
+			this.implements_ = new ArrayList<>();
 			buildCache();
 		} catch (Exception e) {
 			throw new JadxRuntimeException("Error decode class: " + clsInfo, e);
@@ -140,7 +144,8 @@ public class ClassNode extends LineAttrNode implements ILoadable, ICodeNode {
 		this.fields = new ArrayList<>();
 		this.accessFlags = new AccessInfo(accessFlags, AFType.CLASS);
 		this.parentClass = this;
-
+		this.subClasses = new ArrayList<>();
+		this.implements_ = new ArrayList<>();
 		dex.addClassNode(this);
 	}
 
@@ -387,6 +392,26 @@ public class ClassNode extends LineAttrNode implements ILoadable, ICodeNode {
 	public ClassNode getTopParentClass() {
 		ClassNode parent = getParentClass();
 		return parent == this ? this : parent.getTopParentClass();
+	}
+
+	public void addSubClasses(ClassNode classNode) {
+		if (subClasses == null) {
+			subClasses = new ArrayList<>();
+		}
+		subClasses.add(classNode);
+	}
+
+	public List<ClassNode> getSubClasses() {return subClasses;}
+
+	public void addImplements(ClassNode classNode) {
+		if (implements_ == null) {
+			implements_ = new ArrayList<>();
+		}
+		implements_.add(classNode);
+	}
+
+	public List<ClassNode> getImplements() {
+		return implements_;
 	}
 
 	public List<ClassNode> getInnerClasses() {
