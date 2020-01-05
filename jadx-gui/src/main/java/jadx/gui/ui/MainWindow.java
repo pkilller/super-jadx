@@ -679,7 +679,7 @@ public class MainWindow extends JFrame {
 		Action deobfAction = new AbstractAction(NLS.str("menu.deobfuscation"), ICON_DEOBF) {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				toggleDeobfuscation();
+				// toggleDeobfuscation();
 			}
 		};
 		deobfAction.putValue(Action.SHORT_DESCRIPTION, NLS.str("preferences.deobfuscation"));
