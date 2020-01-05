@@ -49,12 +49,40 @@ public abstract class AbstractCodeArea extends RSyntaxTextArea {
 		forceCurrentLineHighlightRepaint();
 	}
 
-	private void setCaretAtLine(int line) {
+	public void forceCurrentLineHighlightRepaint() {
+		super.forceCurrentLineHighlightRepaint();
+	}
+
+	public void setCaretAtLine(int line) {
 		try {
 			setCaretPosition(getLineStartOffset(line));
 		} catch (BadLocationException e) {
 			LOG.debug("Can't scroll to {}", line, e);
 		}
+	}
+
+	public ScrollPosition getScrollPosition() {
+		int line = getCurrentPosition().getLine();
+
+		JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, this);
+		if (viewport == null) {
+			return null;
+		}
+		return new ScrollPosition(viewport.getViewPosition(), line);
+	}
+
+	public void setScrollPosition(ScrollPosition position) {
+		JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, this);
+		if (viewport == null) {
+			return;
+		}
+
+		int lineNum = position.getLine() - 1;
+		if (lineNum < 0) {
+			lineNum = 0;
+		}
+		setCaretAtLine(lineNum);
+		viewport.setViewPosition(position.getPoint());
 	}
 
 	public void centerCurrentLine() {
