@@ -34,6 +34,11 @@ public final class JavaMethod implements JavaNode {
 	}
 
 	@Override
+	public String getRawFullName() {
+		return mth.getMethodInfo().getRawFullId();
+	}
+
+	@Override
 	public JavaClass getDeclaringClass() {
 		return parent;
 	}

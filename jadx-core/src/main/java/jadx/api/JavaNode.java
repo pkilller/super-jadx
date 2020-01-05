@@ -6,6 +6,8 @@ public interface JavaNode {
 
 	String getFullName();
 
+	String getRawFullName();
+
 	JavaClass getDeclaringClass();
 
 	JavaClass getTopParentClass();

@@ -29,6 +29,11 @@ public final class JavaField implements JavaNode {
 	}
 
 	@Override
+	public String getRawFullName() {
+		return field.getFieldInfo().getRawFullId();
+	}
+
+	@Override
 	public JavaClass getDeclaringClass() {
 		return parent;
 	}

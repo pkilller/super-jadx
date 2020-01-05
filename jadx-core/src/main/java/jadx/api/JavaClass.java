@@ -217,6 +217,11 @@ public final class JavaClass implements JavaNode {
 		return cls.getFullName();
 	}
 
+	@Override
+	public String getRawFullName() {
+		return cls.getClassInfo().makeRawFullName();
+	}
+
 	public String getPackage() {
 		return cls.getPackage();
 	}
