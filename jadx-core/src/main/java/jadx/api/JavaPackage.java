@@ -24,6 +24,11 @@ public final class JavaPackage implements JavaNode, Comparable<JavaPackage> {
 		return name;
 	}
 
+	@Override
+	public String getRawFullName() {
+		return name;
+	}
+
 	public List<JavaClass> getClasses() {
 		return classes;
 	}
