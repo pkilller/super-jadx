@@ -103,11 +103,14 @@ public final class CodeArea extends AbstractCodeArea {
 	private void addMenuItems(JClass jCls) {
 		FindUsageAction findUsage = new FindUsageAction(contentPanel, this, jCls);
 		GoToDeclarationAction goToDeclaration = new GoToDeclarationAction(contentPanel, this, jCls);
+		RenameAction rename = new RenameAction(contentPanel, this, jCls);
 
 		JPopupMenu popup = getPopupMenu();
 		popup.addSeparator();
+		popup.add(rename);
 		popup.add(findUsage);
 		popup.add(goToDeclaration);
+		popup.addPopupMenuListener(rename);
 		popup.addPopupMenuListener(findUsage);
 		popup.addPopupMenuListener(goToDeclaration);
 	}
