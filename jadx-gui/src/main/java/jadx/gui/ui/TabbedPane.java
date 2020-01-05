@@ -161,6 +161,10 @@ public class TabbedPane extends JTabbedPane {
 		return panel;
 	}
 
+	public Map<JNode, ContentPanel> getOpenTabs() {
+		return openTabs;
+	}
+
 	@Nullable
 	private ContentPanel makeContentPanel(JNode node) {
 		if (node instanceof JResource) {
