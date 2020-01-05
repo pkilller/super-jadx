@@ -67,6 +67,11 @@ public final class CodeArea extends AbstractCodeArea {
 		}
 	}
 
+	public void reload() {
+		setText(node.getContent());
+		setCaretPosition(0);
+	}
+
 	private void registerWordHighlighter() {
 		addMouseListener(new MouseAdapter() {
 			@Override
