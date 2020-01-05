@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import jadx.core.dex.nodes.VarNode;
 import org.jetbrains.annotations.Nullable;
 
 import jadx.core.codegen.CodeWriter;
@@ -174,6 +175,15 @@ public final class JavaClass implements JavaNode {
 		}
 		if (obj instanceof FieldNode) {
 			return getRootDecompiler().getJavaFieldByNode((FieldNode) obj);
+		}
+		if (obj instanceof VarNode) {
+			VarNode varNode = (VarNode) obj;
+			JavaVar javaVar = getRootDecompiler().getJavaVarByNode(varNode);
+			if (javaVar != null && javaVar.getMethod() == null) {
+				JavaMethod mth = getRootDecompiler().getJavaMethodByNode(varNode.getMethod());
+				javaVar.setMethod(mth);
+			}
+			return javaVar;
 		}
 		return null;
 	}
