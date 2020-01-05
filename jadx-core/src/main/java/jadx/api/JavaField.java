@@ -14,6 +14,10 @@ public final class JavaField implements JavaNode {
 		this.parent = cls;
 	}
 
+	public FieldNode getFieldNode() {
+		return field;
+	}
+
 	@Override
 	public String getName() {
 		return field.getAlias();
