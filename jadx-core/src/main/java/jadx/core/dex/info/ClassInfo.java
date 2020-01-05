@@ -21,6 +21,7 @@ public final class ClassInfo implements Comparable<ClassInfo> {
 	private ClassInfo parentClass;
 	@Nullable
 	private ClassAliasInfo alias;
+	private boolean aliasFromPreset;
 
 	private ClassInfo(RootNode root, ArgType type, boolean inner) {
 		this.type = type;
@@ -180,6 +181,14 @@ public final class ClassInfo implements Comparable<ClassInfo> {
 
 	private String makeAliasRawFullName() {
 		return makeFullClsName(pkg, name, parentClass, true, true);
+	}
+
+	public void setAliasFromPreset(boolean value) {
+		aliasFromPreset = value;
+	}
+
+	public boolean getAliasFromPreset() {
+		return aliasFromPreset;
 	}
 
 	public String getAliasFullPath() {

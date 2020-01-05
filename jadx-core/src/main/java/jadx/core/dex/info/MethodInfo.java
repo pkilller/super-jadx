@@ -80,7 +80,7 @@ public final class MethodInfo {
 	}
 
 	public String getFullName() {
-		return declClass.getFullName() + '.' + name;
+		return declClass.getAliasFullName() + '.' + alias;
 	}
 
 	public String getFullId() {
@@ -140,6 +140,10 @@ public final class MethodInfo {
 
 	public void setAliasFromPreset(boolean value) {
 		aliasFromPreset = value;
+	}
+
+	public boolean getAliasFromPreset() {
+		return aliasFromPreset;
 	}
 
 	@Override

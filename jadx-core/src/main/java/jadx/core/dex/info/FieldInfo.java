@@ -14,6 +14,7 @@ public final class FieldInfo {
 	private final String name;
 	private final ArgType type;
 	private String alias;
+	private boolean aliasFromPreset;
 
 	private FieldInfo(ClassInfo declClass, String name, ArgType type) {
 		this.declClass = declClass;
@@ -73,6 +74,14 @@ public final class FieldInfo {
 
 	public boolean equalsNameAndType(FieldInfo other) {
 		return name.equals(other.name) && type.equals(other.type);
+	}
+
+	public void setAliasFromPreset(boolean value) {
+		aliasFromPreset = value;
+	}
+
+	public boolean getAliasFromPreset() {
+		return aliasFromPreset;
 	}
 
 	@Override
