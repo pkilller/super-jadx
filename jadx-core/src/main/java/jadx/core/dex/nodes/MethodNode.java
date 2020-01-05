@@ -77,6 +77,8 @@ public class MethodNode extends LineAttrNode implements ILoadable, ICodeNode {
 	private List<ExceptionHandler> exceptionHandlers;
 	private List<LoopInfo> loops;
 
+	private List<VarNode> vars;
+
 	public MethodNode(ClassNode classNode, Method mthData, boolean isVirtual) {
 		this.mthInfo = MethodInfo.fromDex(classNode.dex(), mthData.getMethodIndex());
 		this.parentClass = classNode;
@@ -84,6 +86,7 @@ public class MethodNode extends LineAttrNode implements ILoadable, ICodeNode {
 		this.noCode = mthData.getCodeOffset() == 0;
 		this.methodData = noCode ? null : mthData;
 		this.methodIsVirtual = isVirtual;
+		this.vars = new ArrayList<>();
 		unload();
 	}
 
@@ -660,6 +663,14 @@ public class MethodNode extends LineAttrNode implements ILoadable, ICodeNode {
 
 	public void addError(String errStr, Throwable e) {
 		ErrorsCounter.methodError(this, errStr, e);
+	}
+
+	public void addVar(VarNode var) {
+		vars.add(var);
+	}
+
+	public List<VarNode> getVars() {
+		return vars;
 	}
 
 	public MethodInfo getMethodInfo() {
