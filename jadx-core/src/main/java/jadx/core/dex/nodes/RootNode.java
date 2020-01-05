@@ -71,6 +71,8 @@ public class RootNode {
 			dexNode.loadClasses();
 		}
 		initInnerClasses();
+		initImplementClasses();
+		initSubClasses();
 	}
 
 	public void loadResources(List<ResourceFile> resources) {
@@ -125,6 +127,18 @@ public class RootNode {
 	private void initInnerClasses() {
 		for (DexNode dexNode : dexNodes) {
 			dexNode.initInnerClasses();
+		}
+	}
+
+	private void initImplementClasses() {
+		for (DexNode dexNode : dexNodes) {
+			dexNode.initImplementClasses();
+		}
+	}
+
+	private void initSubClasses() {
+		for (DexNode dexNode : dexNodes) {
+			dexNode.initSubClasses();
 		}
 	}
 
