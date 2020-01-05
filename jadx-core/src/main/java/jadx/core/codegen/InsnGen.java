@@ -1,11 +1,10 @@
 package jadx.core.codegen;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
+import jadx.api.JadxDecompiler;
+import jadx.api.JavaVar;
+import jadx.core.dex.nodes.*;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,11 +44,6 @@ import jadx.core.dex.instructions.args.RegisterArg;
 import jadx.core.dex.instructions.args.SSAVar;
 import jadx.core.dex.instructions.mods.ConstructorInsn;
 import jadx.core.dex.instructions.mods.TernaryInsn;
-import jadx.core.dex.nodes.ClassNode;
-import jadx.core.dex.nodes.FieldNode;
-import jadx.core.dex.nodes.InsnNode;
-import jadx.core.dex.nodes.MethodNode;
-import jadx.core.dex.nodes.RootNode;
 import jadx.core.utils.RegionUtils;
 import jadx.core.utils.exceptions.CodegenException;
 import jadx.core.utils.exceptions.JadxRuntimeException;
@@ -95,16 +89,72 @@ public class InsnGen {
 		addArg(code, arg, true);
 	}
 
+	static public JavaVar buildVarNode(MethodNode mth, String name, ArgType type) {
+		if (NameMapper.isReserved(name) || !NameMapper.isValidIdentifier(name)) {
+			return null;
+		}
+		VarNode var = new VarNode(mth, name, type);
+		Map<String, String> varsDeobsMap = JadxDecompiler.instance.getVarsDeobsMap();
+		String fullId = null;
+		try {
+			fullId = var.getVarInfo().getRawFullId();
+		} catch(Exception e) {
+			int a = 0;
+		}
+		if (varsDeobsMap.containsKey(fullId)){
+			String alias = varsDeobsMap.get(fullId);
+			var.getVarInfo().setAlias(alias);
+			var.getVarInfo().setAliasFromPreset(true);
+		}
+		return addVarMapping(mth, var);
+	}
+
+	static private JavaVar addVarMapping(MethodNode mth, VarNode var) {
+		JavaVar javaVar = JadxDecompiler.instance.getJavaVarByNode(var);
+		if (null == javaVar) {
+			javaVar = new JavaVar(null, mth, var);
+			JadxDecompiler.instance.getVarsMap().put(var, javaVar);
+		}
+		return javaVar;
+	}
+
 	public void addArg(CodeWriter code, InsnArg arg, boolean wrap) throws CodegenException {
+		String name = null;
 		if (arg.isRegister()) {
-			code.add(mgen.getNameGen().useArg((RegisterArg) arg));
+			name = mgen.getNameGen().useArg((RegisterArg) arg);
+			// pkiller
+			JavaVar jvar = buildVarNode(mth, name, arg.getType());
+			if (jvar != null) {
+				code.attachAnnotation(jvar.getVarNode());
+				name = jvar.getName();
+			}
+			// pkiller
+			code.add(name);
+			//if (code.line == 5 && code.offset == 31) {}
+			// System.out.println("PKILLER attachAnnotation: " + name + " " + code.line + ", " + code.offset);
 		} else if (arg.isLiteral()) {
-			code.add(lit((LiteralArg) arg));
+			name = lit((LiteralArg) arg);
+			// pkiller
+			JavaVar jvar = buildVarNode(mth, name, arg.getType());
+			if (jvar != null) {
+				code.attachAnnotation(jvar.getVarNode());
+				name = jvar.getName();
+			}
+			// pkiller
+			code.add(name);
 		} else if (arg.isInsnWrap()) {
 			Flags flag = wrap ? Flags.BODY_ONLY : Flags.BODY_ONLY_NOWRAP;
 			makeInsn(((InsnWrapArg) arg).getWrapInsn(), code, flag);
 		} else if (arg.isNamed()) {
-			code.add(((Named) arg).getName());
+			name = ((Named) arg).getName();
+			// pkiller
+			JavaVar jvar = buildVarNode(mth, name, arg.getType());
+			if (jvar != null) {
+				code.attachAnnotation(jvar.getVarNode());
+				name = jvar.getName();
+			}
+			// pkiller
+			code.add(name);
 		} else if (arg.isField()) {
 			FieldArg f = (FieldArg) arg;
 			if (f.isStatic()) {
@@ -126,17 +176,28 @@ public class InsnGen {
 		}
 	}
 
-	public void declareVar(CodeWriter code, RegisterArg arg) {
-		declareVar(code, arg.getSVar().getCodeVar());
+	public String declareVar(CodeWriter code, RegisterArg arg) {
+		return declareVar(code, arg.getSVar().getCodeVar());
 	}
 
-	public void declareVar(CodeWriter code, CodeVar codeVar) {
+	public String declareVar(CodeWriter code, CodeVar codeVar) {
 		if (codeVar.isFinal()) {
 			code.add("final ");
 		}
 		useType(code, codeVar.getType());
 		code.add(' ');
-		code.add(mgen.getNameGen().assignArg(codeVar));
+		String varName = mgen.getNameGen().assignArg(codeVar);
+
+		// pkiller
+		JavaVar jvar = buildVarNode(mth, varName, codeVar.getType());
+		if (jvar != null) {
+			code.attachAnnotation(jvar.getVarNode());
+			varName = jvar.getName();
+		}
+		// pkiller
+
+		code.add(varName);
+		return varName;
 	}
 
 	private String lit(LiteralArg arg) {

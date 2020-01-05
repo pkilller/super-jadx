@@ -1,8 +1,11 @@
 package jadx.core.codegen;
 
+import java.io.PrintStream;
 import java.util.Iterator;
 import java.util.List;
 
+import jadx.api.JavaVar;
+import jadx.core.dex.nodes.VarNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +34,8 @@ import jadx.core.utils.Utils;
 import jadx.core.utils.exceptions.CodegenException;
 import jadx.core.utils.exceptions.DecodeException;
 import jadx.core.utils.exceptions.JadxOverflowException;
+
+import static jadx.core.codegen.InsnGen.buildVarNode;
 
 public class MethodGen {
 	private static final Logger LOG = LoggerFactory.getLogger(MethodGen.class);
@@ -185,7 +190,17 @@ public class MethodGen {
 				classGen.useType(code, argType);
 			}
 			code.add(' ');
-			code.add(nameGen.assignArg(var));
+			String name = nameGen.assignArg(var);
+
+			// pkiller
+			JavaVar jvar = buildVarNode(mth, name, var.getType());
+			if (jvar != null) {
+				code.attachAnnotation(jvar.getVarNode());
+				name = jvar.getName();
+			}
+			// pkiller
+
+			code.add(name);
 
 			i++;
 			if (it.hasNext()) {
