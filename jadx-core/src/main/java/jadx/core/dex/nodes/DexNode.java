@@ -90,6 +90,33 @@ public class DexNode implements IDexNode {
 		}
 	}
 
+	void initImplementClasses() {
+		// implement classes
+		for (ClassNode cls : classes) {
+			List<ArgType> interfaces = cls.getInterfaces();
+			for(ArgType in : interfaces) {
+				ClassNode clsNode = resolveClass(in);
+				if (clsNode != null) {
+					clsNode.addImplements(cls);
+				}
+			}
+		}
+	}
+
+	void initSubClasses() {
+		// sub classes
+		for (ClassNode cls : classes) {
+			ArgType superType = cls.getSuperClass();
+			if (superType == null) {
+				continue;
+			}
+			ClassNode superClsNode = resolveClass(superType);
+			if (superClsNode != null) {
+				superClsNode.addSubClasses(cls);
+			}
+		}
+	}
+
 	public List<ClassNode> getClasses() {
 		return classes;
 	}
