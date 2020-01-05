@@ -1,8 +1,6 @@
 package jadx.gui.utils.search;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -40,6 +38,10 @@ public class TextSearchIndex {
 	private SearchIndex<JNode> mthNamesIndex;
 	private SearchIndex<JNode> fldNamesIndex;
 	private SearchIndex<CodeNode> codeIndex;
+	private Map<JavaNode, Integer> indexOfClsName;
+	private Map<JavaNode, Integer> indexOfMthName;
+	private Map<JavaNode, Integer> indexOfFldName;
+	private Map<String, Integer> indexOfClsNode;
 
 	private List<JavaClass> skippedClasses = new ArrayList<>();
 
@@ -49,22 +51,77 @@ public class TextSearchIndex {
 		this.mthNamesIndex = new SimpleIndex<>();
 		this.fldNamesIndex = new SimpleIndex<>();
 		this.codeIndex = new CodeIndex<>();
+
+		this.indexOfClsName = new HashMap<>();
+		this.indexOfMthName = new HashMap<>();
+		this.indexOfFldName = new HashMap<>();
+		this.indexOfClsNode = new HashMap<>();
 	}
 
 	public void indexNames(JavaClass cls) {
-		clsNamesIndex.put(cls.getFullName(), nodeCache.makeFrom(cls));
+		// index class names
+		if (!indexOfClsName.containsKey(cls)) {
+			int index = clsNamesIndex.size();
+			clsNamesIndex.put(cls.getFullName(), nodeCache.makeFrom(cls));
+			indexOfClsName.put(cls, index);
+		} else {
+			int index = indexOfClsName.get(cls);
+			clsNamesIndex.replace(index, cls.getFullName(), nodeCache.makeFrom(cls));
+		}
+
+		// index mth names
 		for (JavaMethod mth : cls.getMethods()) {
-			mthNamesIndex.put(mth.getFullName(), nodeCache.makeFrom(mth));
+			if (!indexOfMthName.containsKey(mth)) {
+				int index = mthNamesIndex.size();
+				mthNamesIndex.put(mth.getFullName(), nodeCache.makeFrom(mth));
+				indexOfMthName.put(mth, index);
+			} else {
+				int index = indexOfMthName.get(mth);
+				mthNamesIndex.replace(index, mth.getFullName(), nodeCache.makeFrom(mth));
+			}
 		}
+
+		// index fld names
 		for (JavaField fld : cls.getFields()) {
-			fldNamesIndex.put(fld.getFullName(), nodeCache.makeFrom(fld));
+			if (!indexOfFldName.containsKey(fld)) {
+				int index = fldNamesIndex.size();
+				fldNamesIndex.put(fld.getFullName(), nodeCache.makeFrom(fld));
+				indexOfFldName.put(fld, index);
+			} else {
+				int index = indexOfFldName.get(fld);
+				fldNamesIndex.replace(index, fld.getFullName(), nodeCache.makeFrom(fld));
+			}
 		}
+
+		// index inner class
 		for (JavaClass innerCls : cls.getInnerClasses()) {
 			indexNames(innerCls);
 		}
 	}
+	static String template = " ";
+	public void indexCode(JavaClass cls, CodeLinesInfo linesInfo, List<StringRef> lines, boolean isUpdate) {
+		// fill or clean
+		String key = cls.getRawFullName();
+		int comments = cls.getMethods().size() + cls.getFields().size() + 1; // methods + fields + clsName
+		int lineCount = comments * 2 + lines.size();
+		int clsIndex = -1;
+		StringRef strref = StringRef.fromStr(template);
+		if (!indexOfClsNode.containsKey(key)) {
+			// reserved for some comments, for name of classes, fields and methods.
+			clsIndex = codeIndex.getNextIndex();
+			// fill
+			for (int i = 0; i < lineCount; i ++) {
+				codeIndex.put(strref, null);
+			}
+			indexOfClsNode.put(key, clsIndex);
+		} else {
+			// clean
+			clsIndex = indexOfClsNode.get(key);
+			for (int i = 0; i < lineCount; i ++) {
+				codeIndex.replace(clsIndex + i, strref, null);
+			}
+		}
 
-	public void indexCode(JavaClass cls, CodeLinesInfo linesInfo, List<StringRef> lines) {
 		try {
 			boolean strRefSupported = codeIndex.isStringRefSupported();
 			int count = lines.size();
@@ -78,14 +135,18 @@ public class TextSearchIndex {
 				JavaNode node = linesInfo.getJavaNodeByLine(lineNum);
 				CodeNode codeNode = new CodeNode(nodeCache.makeFrom(node == null ? cls : node), lineNum, line);
 				if (strRefSupported) {
-					codeIndex.put(line, codeNode);
+					codeIndex.replace(clsIndex + i, line, codeNode);
 				} else {
-					codeIndex.put(line.toString(), codeNode);
+					codeIndex.replace(clsIndex + i, line.toString(), codeNode);
 				}
 			}
 		} catch (Exception e) {
 			LOG.warn("Failed to index class: {}", cls, e);
 		}
+	}
+
+	public void indexCode(JavaClass cls, CodeLinesInfo linesInfo, List<StringRef> lines) {
+		indexCode(cls, linesInfo, lines, false);
 	}
 
 	public Flowable<JNode> buildSearch(String text, Set<SearchDialog.SearchOptions> options) {

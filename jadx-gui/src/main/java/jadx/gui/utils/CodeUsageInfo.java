@@ -1,9 +1,6 @@
 package jadx.gui.utils;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jadx.api.CodePosition;
@@ -37,6 +34,12 @@ public class CodeUsageInfo {
 
 	public void processClass(JavaClass javaClass, CodeLinesInfo linesInfo, List<StringRef> lines) {
 		Map<CodePosition, JavaNode> usage = javaClass.getUsageMap();
+		// remove exists usage
+		for (Map.Entry<CodePosition, JavaNode> entry : usage.entrySet()) {
+			JavaNode javaNode = entry.getValue();
+			removeExistsUsage(nodeCache.makeFrom(javaNode), javaClass);
+		}
+		// add usage
 		for (Map.Entry<CodePosition, JavaNode> entry : usage.entrySet()) {
 			CodePosition codePosition = entry.getKey();
 			JavaNode javaNode = entry.getValue();
@@ -44,8 +47,18 @@ public class CodeUsageInfo {
 		}
 	}
 
+	private void removeExistsUsage(JNode jNode, JavaClass javaClass) {
+		UsageInfo usageInfo = usageMap.computeIfAbsent(jNode, key -> new UsageInfo());
+		int usageCount = usageInfo.getUsageList().size();
+		for (int i = usageCount-1; i >= 0; i--) {
+			if (usageInfo.getUsageList().get(i).getJavaNode().getTopParentClass() == javaClass) {
+				usageInfo.getUsageList().remove(i);
+			}
+		}
+	}
+
 	private void addUsage(JNode jNode, JavaClass javaClass,
-			CodeLinesInfo linesInfo, CodePosition codePosition, List<StringRef> lines) {
+						  CodeLinesInfo linesInfo, CodePosition codePosition, List<StringRef> lines) {
 		UsageInfo usageInfo = usageMap.computeIfAbsent(jNode, key -> new UsageInfo());
 		int line = codePosition.getLine();
 		JavaNode javaNodeByLine = linesInfo.getJavaNodeByLine(line);

@@ -42,6 +42,17 @@ public class SimpleIndex<T> implements SearchIndex<T> {
 	}
 
 	@Override
+	public void replace(int index, StringRef str, T value) {
+		throw new UnsupportedOperationException("StringRef not supported");
+	}
+
+	@Override
+	public void replace(int index, String str, T value) {
+		keys.set(index, str);
+		values.set(index, value);
+	}
+
+	@Override
 	public Flowable<T> search(final String searchStr, final boolean caseInsensitive) {
 		return Flowable.create(emitter -> {
 			synchronized (syncData) {
@@ -64,5 +75,10 @@ public class SimpleIndex<T> implements SearchIndex<T> {
 		synchronized (syncData) {
 			return keys.size();
 		}
+	}
+
+	@Override
+	public int getNextIndex() {
+		return size();
 	}
 }

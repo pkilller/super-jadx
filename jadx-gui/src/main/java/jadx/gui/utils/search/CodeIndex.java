@@ -33,6 +33,17 @@ public class CodeIndex<T> implements SearchIndex<T> {
 	}
 
 	@Override
+	public void replace(int index, String str, T value) {
+		throw new UnsupportedOperationException("CodeIndex.replace for string not supported");
+	}
+
+	@Override
+	public void replace(int index, StringRef str, T value) {
+		keys.set(index, str);
+		values.set(index, value);
+	}
+
+	@Override
 	public boolean isStringRefSupported() {
 		return true;
 	}
@@ -40,13 +51,16 @@ public class CodeIndex<T> implements SearchIndex<T> {
 	private boolean isMatched(StringRef key, String str, boolean caseInsensitive) {
 		return key.indexOf(str, caseInsensitive) != -1;
 	}
-
+	static boolean isLog = false;
 	@Override
 	public Flowable<T> search(final String searchStr, final boolean caseInsensitive) {
 		return Flowable.create(emitter -> {
 			int size = size();
 			LOG.debug("Code search started: {} ...", searchStr);
 			for (int i = 0; i < size; i++) {
+				if (values.get(i) == null) {
+					continue;
+				}
 				if (isMatched(keys.get(i), searchStr, caseInsensitive)) {
 					emitter.onNext(values.get(i));
 				}
@@ -63,5 +77,10 @@ public class CodeIndex<T> implements SearchIndex<T> {
 	@Override
 	public int size() {
 		return keys.size();
+	}
+
+	@Override
+	public int getNextIndex() {
+		return size();
 	}
 }

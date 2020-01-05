@@ -54,6 +54,27 @@ public class IndexJob extends BackgroundJob {
 		}
 	}
 
+	public void updateClsCache(JavaClass cls) {
+		try {
+			final TextSearchIndex index = cache.getTextIndex();
+			final CodeUsageInfo usageInfo = cache.getUsageInfo();
+
+			index.indexNames(cls);
+
+			CodeLinesInfo linesInfo = new CodeLinesInfo(cls);
+			List<StringRef> lines = splitLines(cls);
+
+			usageInfo.processClass(cls, linesInfo, lines);
+			if (UiUtils.isFreeMemoryAvailable()) {
+				index.indexCode(cls, linesInfo, lines, true);
+			} else {
+				index.classCodeIndexSkipped(cls);
+			}
+		} catch (Exception e) {
+			LOG.error("Index error in class: {}", cls.getFullName(), e);
+		}
+	}
+
 	@NotNull
 	protected List<StringRef> splitLines(JavaClass cls) {
 		List<StringRef> lines = StringRef.split(cls.getCode(), CodeWriter.NL);
