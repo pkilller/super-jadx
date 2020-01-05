@@ -3,18 +3,14 @@ package jadx.api;
 import java.io.File;
 import java.io.StringWriter;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
+import jadx.core.dex.nodes.*;
 import org.jf.baksmali.Adaptors.ClassDefinition;
 import org.jf.baksmali.BaksmaliOptions;
 import org.jf.dexlib2.DexFileFactory;
@@ -28,10 +24,6 @@ import org.slf4j.LoggerFactory;
 import jadx.core.Jadx;
 import jadx.core.ProcessClass;
 import jadx.core.dex.attributes.AFlag;
-import jadx.core.dex.nodes.ClassNode;
-import jadx.core.dex.nodes.FieldNode;
-import jadx.core.dex.nodes.MethodNode;
-import jadx.core.dex.nodes.RootNode;
 import jadx.core.dex.visitors.IDexTreeVisitor;
 import jadx.core.dex.visitors.SaveCode;
 import jadx.core.export.ExportGradleProject;
@@ -84,13 +76,18 @@ public final class JadxDecompiler {
 	private Map<ClassNode, JavaClass> classesMap = new ConcurrentHashMap<>();
 	private Map<MethodNode, JavaMethod> methodsMap = new ConcurrentHashMap<>();
 	private Map<FieldNode, JavaField> fieldsMap = new ConcurrentHashMap<>();
+	private Map<VarNode, JavaVar> varsMap = new ConcurrentHashMap<>();
+
+	static public JadxDecompiler instance = null;
 
 	public JadxDecompiler() {
 		this(new JadxArgs());
+		instance = this;
 	}
 
 	public JadxDecompiler(JadxArgs args) {
 		this.args = args;
+		instance = this;
 	}
 
 	public void load() {
@@ -335,7 +332,7 @@ public final class JadxDecompiler {
 		}
 	}
 
-	RootNode getRoot() {
+	public RootNode getRoot() {
 		return root;
 	}
 
@@ -350,15 +347,22 @@ public final class JadxDecompiler {
 		return xmlParser;
 	}
 
-	Map<ClassNode, JavaClass> getClassesMap() {
+	public Map<ClassNode, JavaClass> getClassesMap() {
 		return classesMap;
 	}
 
-	Map<MethodNode, JavaMethod> getMethodsMap() {
+	public JavaClass getJavaClassByNode(ClassNode cls) {
+		if (classesMap.containsKey(cls)) {
+			return classesMap.get(cls);
+		}
+		return null;
+	}
+
+	public Map<MethodNode, JavaMethod> getMethodsMap() {
 		return methodsMap;
 	}
 
-	JavaMethod getJavaMethodByNode(MethodNode mth) {
+	public JavaMethod getJavaMethodByNode(MethodNode mth) {
 		JavaMethod javaMethod = methodsMap.get(mth);
 		if (javaMethod != null) {
 			return javaMethod;
@@ -372,11 +376,11 @@ public final class JadxDecompiler {
 		return null;
 	}
 
-	Map<FieldNode, JavaField> getFieldsMap() {
+	public Map<FieldNode, JavaField> getFieldsMap() {
 		return fieldsMap;
 	}
 
-	JavaField getJavaFieldByNode(FieldNode fld) {
+	public JavaField getJavaFieldByNode(FieldNode fld) {
 		JavaField javaField = fieldsMap.get(fld);
 		if (javaField != null) {
 			return javaField;
@@ -386,6 +390,18 @@ public final class JadxDecompiler {
 		if (javaClass != null) {
 			javaClass.decompile();
 			return fieldsMap.get(fld);
+		}
+		return null;
+	}
+
+	public Map<VarNode, JavaVar> getVarsMap() {
+		return varsMap;
+	}
+
+	public JavaVar getJavaVarByNode(VarNode var) {
+		JavaVar javaVar = varsMap.get(var);
+		if (javaVar != null) {
+			return javaVar;
 		}
 		return null;
 	}
