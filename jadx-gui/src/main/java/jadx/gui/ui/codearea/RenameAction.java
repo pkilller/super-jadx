@@ -44,15 +44,14 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 
 	static Deobfuscator deobfuscator = null;
 
-	public  RenameAction(ContentPanel contentPanel, CodeArea codeArea, JClass jCls) {
+	public RenameAction(ContentPanel contentPanel, CodeArea codeArea, JClass jCls) {
 		super(NLS.str("popup.rename"));
 		this.contentPanel = contentPanel;
 		this.codeArea = codeArea;
 		this.jCls = jCls;
 	}
 
-	static private void initDeobfuscat() {
-
+	private void initDeobfuscat() {
 		RootNode root = JadxDecompiler.instance.getRoot();
 		List<DexNode> dexNodes = root.getDexNodes();
 		if (dexNodes.isEmpty()) {
@@ -115,13 +114,13 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 		}
 
 		if (node instanceof JavaClass) {
-			deobfuscator.setClsAlias(((JavaClass)node).getClassNode(), alias);
+			deobfuscator.setClsAlias(((JavaClass) node).getClassNode(), alias);
 		} else if (node instanceof JavaMethod) {
-			deobfuscator.setMthAlias(((JavaMethod)node).getMethodNode(), alias);
+			deobfuscator.setMthAlias(((JavaMethod) node).getMethodNode(), alias);
 		} else if (node instanceof JavaField) {
-			deobfuscator.setFieldAlias(((JavaField)node).getFieldNode(), alias);
+			deobfuscator.setFieldAlias(((JavaField) node).getFieldNode(), alias);
 		} else if (node instanceof JavaVar) {
-			deobfuscator.setVarAlias(((JavaVar)node).getVarNode(), alias);
+			deobfuscator.setVarAlias(((JavaVar) node).getVarNode(), alias);
 		}
 		deobfuscator.savePresets(true);
 	}
@@ -155,7 +154,7 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 	}
 
 	private MethodNode recursiveFindTopVirtualMethod(String name, ArgType retType, List<RegisterArg> argsNonThis,
-													  ClassNode beginClassNode) {
+			ClassNode beginClassNode) {
 		ArgType superType = beginClassNode.getSuperClass();
 		if (superType == null) {
 			return null;
@@ -179,7 +178,7 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 	}
 
 	private MethodNode recursiveFindTopInterfaceMethod(String name, ArgType retType, List<RegisterArg> argsNonThis,
-													  ClassNode beginClassNode) {
+			ClassNode beginClassNode) {
 		List<ArgType> interfaces = beginClassNode.getInterfaces();
 		for (ArgType in : interfaces) {
 			ClassNode inNode = beginClassNode.dex().resolveClass(in);
@@ -192,7 +191,7 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 
 			MethodNode topMth = recursiveFindTopInterfaceMethod(name, retType, argsNonThis, inNode);
 
-			if (null !=  topMth) {
+			if (null != topMth) {
 				return topMth;
 			} else if (null != curMth) {
 				return curMth;
@@ -202,23 +201,23 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 	}
 
 	private List<MethodNode> findVirtualsMethods(MethodNode method) {
-		List<MethodNode> out_overrideMethods = new ArrayList<>();
+		List<MethodNode> outOverrideMethods = new ArrayList<>();
 		recursiveFindImpmenentMethods(method.getName(), method.getReturnType(),
-				method.getArguments(false), method.getParentClass(), out_overrideMethods);
-		if (out_overrideMethods.size() > 0) {
-			return out_overrideMethods;
+				method.getArguments(false), method.getParentClass(), outOverrideMethods);
+		if (outOverrideMethods.size() > 0) {
+			return outOverrideMethods;
 		}
 
 		recursiveFindOverrideMethods(method.getName(), method.getReturnType(),
-				method.getArguments(false), method.getParentClass(), out_overrideMethods);
-		if (out_overrideMethods.size() > 0) {
-			return out_overrideMethods;
+				method.getArguments(false), method.getParentClass(), outOverrideMethods);
+		if (outOverrideMethods.size() > 0) {
+			return outOverrideMethods;
 		}
 		return null;
 	}
 
 	private void recursiveFindImpmenentMethods(String name, ArgType retType, List<RegisterArg> argsNonThis,
-												  ClassNode beginClassNode, List<MethodNode> out_overrideMethods) {
+			ClassNode beginClassNode, List<MethodNode> outOverrideMethods) {
 		List<ClassNode> impClasses = beginClassNode.getImplements();
 
 		for (ClassNode impClass : impClasses) {
@@ -227,14 +226,14 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 					argsNonThis);
 			if (subMethod != null) {
 				// has override
-				out_overrideMethods.add(subMethod);
+				outOverrideMethods.add(subMethod);
 			}
-			recursiveFindImpmenentMethods(name, retType, argsNonThis, impClass, out_overrideMethods);
+			recursiveFindImpmenentMethods(name, retType, argsNonThis, impClass, outOverrideMethods);
 		}
 	}
 
 	private void recursiveFindOverrideMethods(String name, ArgType retType, List<RegisterArg> argsNonThis,
-									  ClassNode beginClassNode, List<MethodNode> out_overrideMethods) {
+			ClassNode beginClassNode, List<MethodNode> outOverrideMethods) {
 		List<ClassNode> subClasses = beginClassNode.getSubClasses();
 
 		for (ClassNode subClass : subClasses) {
@@ -243,9 +242,9 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 					argsNonThis);
 			if (subMethod != null) {
 				// has override
-				out_overrideMethods.add(subMethod);
+				outOverrideMethods.add(subMethod);
 			}
-			recursiveFindOverrideMethods(name, retType, argsNonThis, subClass, out_overrideMethods);
+			recursiveFindOverrideMethods(name, retType, argsNonThis, subClass, outOverrideMethods);
 		}
 	}
 
@@ -279,7 +278,7 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 		JNode jOuterClass = mainWin.getCacheObject().getNodeCache().makeFrom(jnode.getTopParentClass());
 		ContentPanel panel = mainWin.getTabbedPane().getOpenTabs().get(jOuterClass);
 		if (panel instanceof ClassCodeContentPanel) {
-			CodeArea area = (CodeArea) ((ClassCodeContentPanel)panel).getCodeArea();
+			CodeArea area = (CodeArea) ((ClassCodeContentPanel) panel).getCodeArea();
 			ScrollPosition pos = area.getScrollPosition();
 			area.reload();
 			area.setScrollPosition(pos);
@@ -309,18 +308,18 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 
 		// will be regenerate override methods and usage nodes for the method.
 		if (jnode instanceof JMethod) {
-			List<JavaMethod> overrideMethods = getOverrideMethods((JavaMethod)jnode.getJavaNode());
+			List<JavaMethod> overrideMethods = getOverrideMethods((JavaMethod) jnode.getJavaNode());
 			if (overrideMethods != null) {
 				for (JavaMethod mth : overrideMethods) {
-					JNode _jmth = mainWin.getCacheObject().getNodeCache().makeFrom(mth);
+					JNode jmth = mainWin.getCacheObject().getNodeCache().makeFrom(mth);
 
 					// usage classes.
-					List<CodeNode> _usages = cache.getUsageInfo().getUsageList(_jmth);
-					if (_usages == null) {
+					List<CodeNode> tmpUsages = cache.getUsageInfo().getUsageList(jmth);
+					if (tmpUsages == null) {
 						return;
 					}
 
-					for (CodeNode usage : _usages) {
+					for (CodeNode usage : tmpUsages) {
 						if (!usageNodes.contains(usage.getJavaNode())) {
 							usageNodes.add(usage.getJavaNode());
 						}

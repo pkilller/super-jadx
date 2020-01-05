@@ -5,6 +5,7 @@ import java.awt.*;
 public class ScrollPosition {
 	Point mPoint;
 	int mLine;
+
 	public ScrollPosition(Point point, int line) {
 		mPoint = point;
 		mLine = line;

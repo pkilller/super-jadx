@@ -98,20 +98,17 @@ public class RenameDialog extends JDialog implements ActionListener {
 		String newname = null;
 		String origname = null;
 		if (node instanceof JavaMethod) {
-			newname = ((JavaMethod)node).getMethodNode().getMethodInfo().getAlias();
-			origname = ((JavaMethod)node).getMethodNode().getMethodInfo().getName();
+			newname = ((JavaMethod) node).getMethodNode().getMethodInfo().getAlias();
+			origname = ((JavaMethod) node).getMethodNode().getMethodInfo().getName();
 		} else if (node instanceof JavaField) {
-			newname = ((JavaField)node).getFieldNode().getFieldInfo().getAlias();
-			origname = ((JavaField)node).getFieldNode().getFieldInfo().getName();
+			newname = ((JavaField) node).getFieldNode().getFieldInfo().getAlias();
+			origname = ((JavaField) node).getFieldNode().getFieldInfo().getName();
 		} else if (node instanceof JavaClass) {
-			newname = ((JavaClass)node).getClassNode().getClassInfo().getAliasShortName();
-			origname = ((JavaClass)node).getClassNode().getClassInfo().getShortName();
-			for (CodePosition codePos : ((JavaClass)node).getUsageMap().keySet()) {
-				JavaNode _node = ((JavaClass)node).getUsageMap().get(codePos);
-			}
+			newname = ((JavaClass) node).getClassNode().getClassInfo().getAliasShortName();
+			origname = ((JavaClass) node).getClassNode().getClassInfo().getShortName();
 		} else if (node instanceof JavaVar) {
-			newname = ((JavaVar)node).getVarNode().getVarInfo().getAlias();
-			origname = ((JavaVar)node).getVarNode().getVarInfo().getName();
+			newname = ((JavaVar) node).getVarNode().getVarInfo().getAlias();
+			origname = ((JavaVar) node).getVarNode().getVarInfo().getName();
 		}
 		mNewName.setText(newname);
 		mOrigName.setEditable(false);
@@ -126,8 +123,8 @@ public class RenameDialog extends JDialog implements ActionListener {
 			mAction.setDeobfuscatName(node, newName);
 		} else if (node instanceof JavaMethod) {
 			// rename override methods
-			if (!((JavaMethod)node).getMethodNode().isConstructor() && ((JavaMethod)node).getMethodNode().isVirtual()) {
-				List<JavaMethod> overrideMethods = mAction.getOverrideMethods(((JavaMethod)node));
+			if (!((JavaMethod) node).getMethodNode().isConstructor() && ((JavaMethod) node).getMethodNode().isVirtual()) {
+				List<JavaMethod> overrideMethods = mAction.getOverrideMethods(((JavaMethod) node));
 				if (overrideMethods != null) {
 					for (JavaMethod mth : overrideMethods) {
 						mAction.setDeobfuscatName(mth, newName);

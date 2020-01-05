@@ -50,7 +50,7 @@ public class CodeUsageInfo {
 	private void removeExistsUsage(JNode jNode, JavaClass javaClass) {
 		UsageInfo usageInfo = usageMap.computeIfAbsent(jNode, key -> new UsageInfo());
 		int usageCount = usageInfo.getUsageList().size();
-		for (int i = usageCount-1; i >= 0; i--) {
+		for (int i = usageCount - 1; i >= 0; i--) {
 			if (usageInfo.getUsageList().get(i).getJavaNode().getTopParentClass() == javaClass) {
 				usageInfo.getUsageList().remove(i);
 			}
@@ -58,7 +58,7 @@ public class CodeUsageInfo {
 	}
 
 	private void addUsage(JNode jNode, JavaClass javaClass,
-						  CodeLinesInfo linesInfo, CodePosition codePosition, List<StringRef> lines) {
+		CodeLinesInfo linesInfo, CodePosition codePosition, List<StringRef> lines) {
 		UsageInfo usageInfo = usageMap.computeIfAbsent(jNode, key -> new UsageInfo());
 		int line = codePosition.getLine();
 		JavaNode javaNodeByLine = linesInfo.getJavaNodeByLine(line);

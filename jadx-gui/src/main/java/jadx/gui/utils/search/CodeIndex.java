@@ -51,7 +51,7 @@ public class CodeIndex<T> implements SearchIndex<T> {
 	private boolean isMatched(StringRef key, String str, boolean caseInsensitive) {
 		return key.indexOf(str, caseInsensitive) != -1;
 	}
-	static boolean isLog = false;
+
 	@Override
 	public Flowable<T> search(final String searchStr, final boolean caseInsensitive) {
 		return Flowable.create(emitter -> {

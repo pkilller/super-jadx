@@ -1,10 +1,7 @@
 package jadx.gui.treemodel;
 
-import jadx.api.JavaField;
 import jadx.api.JavaNode;
 import jadx.api.JavaVar;
-import jadx.core.dex.info.AccessInfo;
-import jadx.gui.utils.OverlayIcon;
 import jadx.gui.utils.UiUtils;
 
 import javax.swing.*;

@@ -45,6 +45,8 @@ public class TextSearchIndex {
 
 	private List<JavaClass> skippedClasses = new ArrayList<>();
 
+	static String template = " ";
+
 	public TextSearchIndex(JNodeCache nodeCache) {
 		this.nodeCache = nodeCache;
 		this.clsNamesIndex = new SimpleIndex<>();
@@ -98,7 +100,7 @@ public class TextSearchIndex {
 			indexNames(innerCls);
 		}
 	}
-	static String template = " ";
+
 	public void indexCode(JavaClass cls, CodeLinesInfo linesInfo, List<StringRef> lines, boolean isUpdate) {
 		// fill or clean
 		String key = cls.getRawFullName();
@@ -110,14 +112,14 @@ public class TextSearchIndex {
 			// reserved for some comments, for name of classes, fields and methods.
 			clsIndex = codeIndex.getNextIndex();
 			// fill
-			for (int i = 0; i < lineCount; i ++) {
+			for (int i = 0; i < lineCount; i++) {
 				codeIndex.put(strref, null);
 			}
 			indexOfClsNode.put(key, clsIndex);
 		} else {
 			// clean
 			clsIndex = indexOfClsNode.get(key);
-			for (int i = 0; i < lineCount; i ++) {
+			for (int i = 0; i < lineCount; i++) {
 				codeIndex.replace(clsIndex + i, strref, null);
 			}
 		}
