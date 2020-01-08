@@ -100,7 +100,7 @@ import static javax.swing.KeyStroke.getKeyStroke;
 public class MainWindow extends JFrame {
 	private static final Logger LOG = LoggerFactory.getLogger(MainWindow.class);
 
-	private static final String DEFAULT_TITLE = "jadx-gui";
+	private static final String DEFAULT_TITLE = "super-jadx";
 
 	private static final double BORDER_RATIO = 0.15;
 	private static final double WINDOW_RATIO = 1 - BORDER_RATIO * 2;
