@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import jadx.api.JadxDecompiler;
+import jadx.api.JavaNode;
 import jadx.core.dex.info.VarInfo;
 import jadx.core.dex.nodes.*;
 import org.jetbrains.annotations.NotNull;
@@ -656,4 +657,5 @@ public class Deobfuscator {
 		}
 		return true;
 	}
+
 }

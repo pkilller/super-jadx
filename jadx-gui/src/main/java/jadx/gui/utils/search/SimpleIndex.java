@@ -23,6 +23,14 @@ public class SimpleIndex<T> implements SearchIndex<T> {
 		}
 	}
 
+	public String getKey(int index) {
+		return keys.get(index);
+	}
+
+	public T getValue(int index) {
+		return values.get(index);
+	}
+
 	@Override
 	public void put(StringRef str, T value) {
 		throw new UnsupportedOperationException("StringRef not supported");

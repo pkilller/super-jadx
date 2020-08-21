@@ -1,5 +1,6 @@
 package jadx.api;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -13,14 +14,29 @@ import jadx.core.dex.nodes.MethodNode;
 public final class JavaMethod implements JavaNode {
 	private final MethodNode mth;
 	private final JavaClass parent;
+	private List<JavaVar> vars;
 
 	JavaMethod(JavaClass cls, MethodNode m) {
 		this.parent = cls;
 		this.mth = m;
+		this.vars = new ArrayList<>();
 	}
 
 	public MethodNode getMethodNode() {
 		return mth;
+	}
+
+	public void addVar(JavaVar var) {
+		vars.add(var);
+	}
+
+	public List<JavaVar> getVars() {
+		return vars;
+	}
+
+	@Override
+	public void setName(String name) {
+		mth.getMethodInfo().setAlias(name);
 	}
 
 	@Override
@@ -36,6 +52,11 @@ public final class JavaMethod implements JavaNode {
 	@Override
 	public String getRawFullName() {
 		return mth.getMethodInfo().getRawFullId();
+	}
+
+	@Override
+	public String getAliasFullName() {
+		return mth.getMethodInfo().getAliasFullId();
 	}
 
 	@Override

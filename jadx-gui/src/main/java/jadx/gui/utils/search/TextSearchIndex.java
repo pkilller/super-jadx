@@ -2,6 +2,8 @@ package jadx.gui.utils.search;
 
 import java.util.*;
 
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +60,45 @@ public class TextSearchIndex {
 		this.indexOfMthName = new HashMap<>();
 		this.indexOfFldName = new HashMap<>();
 		this.indexOfClsNode = new HashMap<>();
+	}
+
+	interface SearchCallback {
+		void onFound(String fullname, JavaNode jnode);
+		void onNotFound(String fullname);
+	}
+
+	public JavaNode getClsByFullname(String fullName) {
+		return getNodeByFullname(clsNamesIndex, fullName);
+	}
+
+	public JavaNode getMthByFullname(String fullName) {
+		return getNodeByFullname(mthNamesIndex, fullName);
+	}
+
+	public JavaNode getFldByFullname(String fullName) {
+		return getNodeByFullname(fldNamesIndex, fullName);
+	}
+
+	private JavaNode getNodeByFullname(SearchIndex<JNode> nodeNameIndex, String fullName) {
+		Flowable<JNode> result = nodeNameIndex.search(fullName, true);
+		final JavaNode[] foundNode = new JavaNode[1];
+		foundNode[0] = null;
+		Disposable disposable = result.forEach(new Consumer<JNode>() {
+			@Override
+			public void accept(JNode jNode) throws Exception {
+				if (fullName.equals(jNode.getJavaNode().getFullName())) {
+					foundNode[0] = jNode.getJavaNode();
+				}
+			}
+		});
+		while(!disposable.isDisposed()) {
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		return foundNode[0];
 	}
 
 	public void indexNames(JavaClass cls) {

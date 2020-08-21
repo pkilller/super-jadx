@@ -230,11 +230,11 @@ public final class JadxDecompiler {
 			List<JavaClass> clsList = new ArrayList<>(classNodeList.size());
 			classesMap.clear();
 			for (ClassNode classNode : classNodeList) {
-				if (!classNode.contains(AFlag.DONT_GENERATE)) {
+				//if (!classNode.contains(AFlag.DONT_GENERATE)) {
 					JavaClass javaClass = new JavaClass(classNode, this);
 					clsList.add(javaClass);
 					classesMap.put(classNode, javaClass);
-				}
+				//}
 			}
 			classes = Collections.unmodifiableList(clsList);
 		}
@@ -400,11 +400,7 @@ public final class JadxDecompiler {
 	}
 
 	public JavaVar getJavaVarByNode(VarNode var) {
-		JavaVar javaVar = varsMap.get(var);
-		if (javaVar != null) {
-			return javaVar;
-		}
-		return null;
+		return varsMap.get(var);
 	}
 
 	public void setVarsDeobsMap(Map<String, String> map) {

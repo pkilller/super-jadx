@@ -193,10 +193,10 @@ public class MethodGen {
 			String name = nameGen.assignArg(var);
 
 			// pkiller
-			JavaVar jvar = buildVarNode(mth, name, var.getType());
-			if (jvar != null) {
-				code.attachAnnotation(jvar.getVarNode());
-				name = jvar.getName();
+			VarNode varNode = buildVarNode(mth, name, var.getType());
+			if (varNode != null) {
+				code.attachAnnotation(varNode);
+				name = varNode.getAlias();
 			}
 			// pkiller
 

@@ -8,14 +8,26 @@ public final class JavaPackage implements JavaNode, Comparable<JavaPackage> {
 	private final String name;
 	private final List<JavaClass> classes;
 
+	private String alias;
+
 	JavaPackage(String name, List<JavaClass> classes) {
 		this.name = name;
 		this.classes = classes;
+		this.alias = null;
+	}
+
+	@Override
+	public void setName(String name) {
+		alias = name;
 	}
 
 	@Override
 	public String getName() {
-		return name;
+		if (this.alias != null) {
+			return alias;
+		} else {
+			return name;
+		}
 	}
 
 	@Override
@@ -26,6 +38,11 @@ public final class JavaPackage implements JavaNode, Comparable<JavaPackage> {
 
 	@Override
 	public String getRawFullName() {
+		return name;
+	}
+
+	@Override
+	public String getAliasFullName() {
 		return name;
 	}
 

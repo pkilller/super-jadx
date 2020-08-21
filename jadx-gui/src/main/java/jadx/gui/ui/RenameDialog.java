@@ -145,6 +145,16 @@ public class RenameDialog extends JDialog implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent actionEvent) {
 		String newName = mNewName.getText();
+		if (!mAction.isValidName(newName)) {
+			System.out.println("new name is invalied.");
+			return;
+		}
+
+		if (mAction.isDuplicateName(node, newName)) {
+			System.out.println("new name is duplicated.");
+			return;
+		}
+
 		setNewName(node, newName);
 		dispose();
 	}

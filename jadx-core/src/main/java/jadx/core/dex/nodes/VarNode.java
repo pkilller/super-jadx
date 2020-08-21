@@ -18,17 +18,10 @@ public class VarNode extends LineAttrNode implements ICodeNode {
 
 	public VarNode(MethodNode mth, String varName, ArgType argType) {
 		VarInfo varInfo = new VarInfo(mth.getMethodInfo(), varName, argType);
-		mth.addVar(this);
 		this.mth = mth;
 		this.varInfo = varInfo;
 		this.type = varInfo.getType();
 	}
-
-//	public VarNode(MethodNode mth, VarInfo varInfo) {
-//		this.mth = mth;
-//		this.varInfo = varInfo;
-//		this.type = varInfo.getType();
-//	}
 
 	public VarInfo getVarInfo() {
 		return varInfo;

@@ -8,34 +8,35 @@ import jadx.core.dex.nodes.MethodNode;
 import jadx.core.dex.nodes.VarNode;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Map;
 
-///  TODO:  还没修改完成， 从JavaFIeld修改而来
 public final class JavaVar implements JavaNode {
 
 	private JavaMethod mth;
 	private final VarNode var;
-	private final MethodNode mthN;
 
-	public JavaVar(JavaMethod jmth, MethodNode mthNode, VarNode var) {
+	public JavaVar(JavaMethod jmth, VarNode var) {
 		this.mth = jmth;
 		this.var = var;
-		this.mthN = mthNode;
-	}
-
-	private void initJavaMethod() {
-		if (mth == null) {
-			mth = JadxDecompiler.instance.getJavaMethodByNode(mthN);
-		}
 	}
 
 	public VarNode getVarNode() {
 		return var;
 	}
 
-	public void setMethod(JavaMethod mth) { initJavaMethod(); this.mth = mth; }
+	public void setMethod(JavaMethod mth) {
+		this.mth = mth;
+	}
 
-	public JavaMethod getMethod() { initJavaMethod(); return mth;}
+	public JavaMethod getMethod() {
+		return mth;
+	}
+
+	@Override
+	public void setName(String name) {
+		var.getVarInfo().setAlias(name);
+	}
 
 	@Override
 	public String getName() {
@@ -44,7 +45,6 @@ public final class JavaVar implements JavaNode {
 
 	@Override
 	public String getFullName() {
-		initJavaMethod();
 		return mth.getFullName() + "()->" + getName() + ":" + getType();
 	}
 
@@ -54,29 +54,21 @@ public final class JavaVar implements JavaNode {
 	}
 
 	@Override
+	public String getAliasFullName() {
+		return var.getMethod().getMethodInfo().getAliasFullId() + "()->" + var.getAlias() + ":" + getType();
+	}
+
+	@Override
 	public JavaClass getDeclaringClass() {
-		initJavaMethod();
-//		if (mth == null) {
-//
-//			Map<MethodNode, JavaMethod> mths = JadxDecompiler.instance.getMethodsMap();
-//			for (MethodNode _mth : mths.keySet()) {
-//				if (_mth.getMethodInfo().getRawFullId().equals(mthN.getMethodInfo().getRawFullId())) {
-//					int aa = 1;
-//				}
-//			}
-//			int a = 0;
-//		}
 		return mth.getDeclaringClass();
 	}
 
 	@Override
 	public JavaClass getTopParentClass() {
-		initJavaMethod();
 		return mth.getTopParentClass();
 	}
 
 	public AccessInfo getAccessFlags() {
-		initJavaMethod();
 		return mth.getAccessFlags();
 	}
 

@@ -19,6 +19,7 @@ import jadx.gui.ui.MainWindow;
 import jadx.gui.ui.RenameDialog;
 import jadx.gui.utils.CacheObject;
 import jadx.gui.utils.NLS;
+import jadx.gui.utils.search.TextSearchIndex;
 import org.fife.ui.rsyntaxtextarea.Token;
 
 import javax.swing.*;
@@ -108,9 +109,17 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 		deobfuscator.updateVarsDeobs();
 	}
 
+	public boolean isDuplicateName(JavaNode node, String alias) {
+		JavaNode nodeOfDuplicateName = lookupNodeByDuplicateName(contentPanel.getTabbedPane().getMainWindow().getCacheObject(), node, alias);
+		return nodeOfDuplicateName != null;
+	}
+
 	public void setDeobfuscatName(JavaNode node, String alias) {
 		if (deobfuscator == null) {
 			initDeobfuscat();
+		}
+		if (node.getName().equals(alias)) {
+			return ;
 		}
 
 		if (node instanceof JavaClass) {
@@ -123,6 +132,71 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 			deobfuscator.setVarAlias(((JavaVar) node).getVarNode(), alias);
 		}
 		deobfuscator.savePresets(true);
+	}
+
+
+	private String previewFullname(JavaNode node, String newName) {
+		String bakName = node.getName();
+		node.setName(newName);
+		String fullName = node.getAliasFullName();
+		node.setName(bakName);
+		return fullName;
+	}
+
+	// return: existed node or null
+	//
+	public JavaNode lookupNodeByDuplicateName(CacheObject cache, JavaNode node, String newName) {
+		assert cache.getTextIndex() != null;
+
+        // 需要考虑Overvie方法名称，重名的问题
+
+		TextSearchIndex searchIndex = cache.getTextIndex();
+
+		if (node instanceof JavaClass) {
+			String previewFullName = previewFullname(node, newName);
+			for (JavaClass jcls : JadxDecompiler.instance.getClasses()) {
+				if (jcls.getAliasFullName().equals(previewFullName) && !jcls.equals(node)) {
+					return jcls;
+				}
+			}
+
+		} else if (node instanceof JavaMethod) {
+			List<JavaMethod> overrideMethods = getOverrideMethods((JavaMethod) node);
+
+			for (JavaMethod jmth : overrideMethods) {
+				JavaClass parentCls = jmth.getDeclaringClass();
+				String newFullName = previewFullname(jmth, newName);
+				for (JavaMethod _jmth : parentCls.getMethods()) {
+					if (_jmth.getAliasFullName().equals(newFullName) && !_jmth.equals(jmth)) {
+						return jmth;
+					}
+				}
+			}
+
+		} else if (node instanceof JavaField) {
+			JavaClass parentCls = node.getDeclaringClass();
+			String newFullName = previewFullname(node, newName);
+			for (JavaField jfld : parentCls.getFields()) {
+				if (jfld.getAliasFullName().equals(newFullName) && !jfld.equals(node)) {
+					return jfld;
+				}
+			}
+
+		} else if (node instanceof JavaVar) {
+			List<JavaVar> vars = ((JavaVar) node).getMethod().getVars();
+			for (JavaVar var : vars) {
+				if (var.getName().equals(newName) && !var.equals(node)) {
+					return var;
+				}
+			}
+		}
+		return null;
+	}
+
+	public boolean isValidName(String name) {
+		String regex = "[a-zA-Z$_][a-zA-Z0-9$_]*";
+
+		return name.matches(regex);
 	}
 
 	private void recompileJavaCode(ClassNode classNode) {
@@ -138,14 +212,14 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 		cache.getIndexJob().updateClsCache(cls);
 	}
 
-	private MethodNode findTopMethod(MethodNode method) {
-		MethodNode topMth = recursiveFindTopVirtualMethod(method.getName(), method.getReturnType(),
+	private MethodNode lookupTopMethod(MethodNode method) {
+		MethodNode topMth = lookupTopVirtualMethod(method.getName(), method.getReturnType(),
 				method.getArguments(false), method.getParentClass());
 		if (topMth != null) {
 			return topMth;
 		}
 
-		topMth = recursiveFindTopInterfaceMethod(method.getName(), method.getReturnType(),
+		topMth = lookupTopInterfaceMethod(method.getName(), method.getReturnType(),
 				method.getArguments(false), method.getParentClass());
 		if (topMth != null) {
 			return topMth;
@@ -153,8 +227,8 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 		return null;
 	}
 
-	private MethodNode recursiveFindTopVirtualMethod(String name, ArgType retType, List<RegisterArg> argsNonThis,
-			ClassNode beginClassNode) {
+	private MethodNode lookupTopVirtualMethod(String name, ArgType retType, List<RegisterArg> argsNonThis,
+											  ClassNode beginClassNode) {
 		ArgType superType = beginClassNode.getSuperClass();
 		if (superType == null) {
 			return null;
@@ -166,7 +240,7 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 		MethodNode curMth = superClass.getMethodByPrototype(name,
 				retType,
 				argsNonThis);
-		MethodNode topMth = recursiveFindTopVirtualMethod(name, retType, argsNonThis, superClass);
+		MethodNode topMth = lookupTopVirtualMethod(name, retType, argsNonThis, superClass);
 
 		if (null != topMth) {
 			return topMth;
@@ -177,8 +251,8 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 		}
 	}
 
-	private MethodNode recursiveFindTopInterfaceMethod(String name, ArgType retType, List<RegisterArg> argsNonThis,
-			ClassNode beginClassNode) {
+	private MethodNode lookupTopInterfaceMethod(String name, ArgType retType, List<RegisterArg> argsNonThis,
+												ClassNode beginClassNode) {
 		List<ArgType> interfaces = beginClassNode.getInterfaces();
 		for (ArgType in : interfaces) {
 			ClassNode inNode = beginClassNode.dex().resolveClass(in);
@@ -189,7 +263,7 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 					retType,
 					argsNonThis);
 
-			MethodNode topMth = recursiveFindTopInterfaceMethod(name, retType, argsNonThis, inNode);
+			MethodNode topMth = lookupTopInterfaceMethod(name, retType, argsNonThis, inNode);
 
 			if (null != topMth) {
 				return topMth;
@@ -200,24 +274,24 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 		return null;
 	}
 
-	private List<MethodNode> findVirtualsMethods(MethodNode method) {
+	private List<MethodNode> findVirtualMethods(MethodNode beginMethod) {
 		List<MethodNode> outOverrideMethods = new ArrayList<>();
-		recursiveFindImpmenentMethods(method.getName(), method.getReturnType(),
-				method.getArguments(false), method.getParentClass(), outOverrideMethods);
+		recursiveFindImplementMethods(beginMethod.getName(), beginMethod.getReturnType(),
+				beginMethod.getArguments(false), beginMethod.getParentClass(), outOverrideMethods);
 		if (outOverrideMethods.size() > 0) {
 			return outOverrideMethods;
 		}
 
-		recursiveFindOverrideMethods(method.getName(), method.getReturnType(),
-				method.getArguments(false), method.getParentClass(), outOverrideMethods);
+		recursiveFindOverrideMethods(beginMethod.getName(), beginMethod.getReturnType(),
+				beginMethod.getArguments(false), beginMethod.getParentClass(), outOverrideMethods);
 		if (outOverrideMethods.size() > 0) {
 			return outOverrideMethods;
 		}
 		return null;
 	}
 
-	private void recursiveFindImpmenentMethods(String name, ArgType retType, List<RegisterArg> argsNonThis,
-			ClassNode beginClassNode, List<MethodNode> outOverrideMethods) {
+	private void recursiveFindImplementMethods(String name, ArgType retType, List<RegisterArg> argsNonThis,
+											   ClassNode beginClassNode, List<MethodNode> outOverrideMethods) {
 		List<ClassNode> impClasses = beginClassNode.getImplements();
 
 		for (ClassNode impClass : impClasses) {
@@ -228,7 +302,7 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 				// has override
 				outOverrideMethods.add(subMethod);
 			}
-			recursiveFindImpmenentMethods(name, retType, argsNonThis, impClass, outOverrideMethods);
+			recursiveFindImplementMethods(name, retType, argsNonThis, impClass, outOverrideMethods);
 		}
 	}
 
@@ -257,14 +331,14 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 			return null;
 		}
 		// find the same method prototype from top super
-		MethodNode topMethodNode = findTopMethod(method.getMethodNode());
+		MethodNode topMethodNode = lookupTopMethod(method.getMethodNode());
 		if (topMethodNode == null) {
 			topMethodNode = method.getMethodNode();
 		}
 		overrideJMethods.add(JadxDecompiler.instance.getJavaMethodByNode(topMethodNode));
 
 		// find all override methods
-		List<MethodNode> virtualMethods = findVirtualsMethods(topMethodNode);
+		List<MethodNode> virtualMethods = findVirtualMethods(topMethodNode);
 		if (virtualMethods != null) {
 			for (MethodNode virMth : virtualMethods) {
 				overrideJMethods.add(JadxDecompiler.instance.getJavaMethodByNode(virMth));
@@ -273,7 +347,7 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 		return overrideJMethods;
 	}
 
-	private void refreashCodeAren(JavaNode jnode) {
+	private void refreashCodeArea(JavaNode jnode) {
 		MainWindow mainWin = contentPanel.getTabbedPane().getMainWindow();
 		JNode jOuterClass = mainWin.getCacheObject().getNodeCache().makeFrom(jnode.getTopParentClass());
 		ContentPanel panel = mainWin.getTabbedPane().getOpenTabs().get(jOuterClass);
@@ -284,6 +358,12 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 			area.setScrollPosition(pos);
 		}
 	}
+
+//	private void refreashTabbedTitle(JavaNode jnode) {
+//		MainWindow mainWin = contentPanel.getTabbedPane().getMainWindow();
+//		JNode jOuterClass = mainWin.getCacheObject().getNodeCache().makeFrom(jnode.getTopParentClass());
+//		ContentPanel panel = mainWin.getTabbedPane().getTabComponentAt(0).setTit
+//	}
 
 	public void reGenerateClassesCode() {
 		MainWindow mainWin = contentPanel.getTabbedPane().getMainWindow();
@@ -341,9 +421,11 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 			recompileJavaCode(jcls.getClassNode());
 			rebuildUsage(jcls.getClassNode());
 
-			// refresh code aren
-			refreashCodeAren(jcls);
+			// refresh code area
+			refreashCodeArea(jcls);
 		}
+
+
 	}
 
 	@Override
@@ -351,6 +433,7 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 		if (node == null) {
 			return;
 		}
+
 		MainWindow mainWindow = contentPanel.getTabbedPane().getMainWindow();
 		jnode = mainWindow.getCacheObject().getNodeCache().makeFrom(node);
 
@@ -358,7 +441,7 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 		renameDialog.setVisible(true);
 	}
 
-	void setCaretFollowsToken(Token token) {
+	private void setCaretFollowsToken(Token token) {
 		try {
 			// Caret follows cursor.
 			int line = codeArea.getLineOfOffset(token.getOffset());

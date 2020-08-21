@@ -90,10 +90,10 @@ public final class JavaClass implements JavaNode {
 			List<JavaClass> list = new ArrayList<>(inClsCount);
 			for (ClassNode inner : cls.getInnerClasses()) {
 				//if (!inner.contains(AFlag.DONT_GENERATE)) {
-				JavaClass javaClass = new JavaClass(inner, this);
-				javaClass.load();
-				list.add(javaClass);
-				rootDecompiler.getClassesMap().put(inner, javaClass);
+					JavaClass javaClass = new JavaClass(inner, this);
+					javaClass.load();
+					list.add(javaClass);
+					rootDecompiler.getClassesMap().put(inner, javaClass);
 				//}
 			}
 			this.innerClasses = Collections.unmodifiableList(list);
@@ -104,9 +104,9 @@ public final class JavaClass implements JavaNode {
 			List<JavaField> flds = new ArrayList<>(fieldsCount);
 			for (FieldNode f : cls.getFields()) {
 				//if (!f.contains(AFlag.DONT_GENERATE)) {
-				JavaField javaField = new JavaField(f, this);
-				flds.add(javaField);
-				rootDecompiler.getFieldsMap().put(f, javaField);
+					JavaField javaField = new JavaField(f, this);
+					flds.add(javaField);
+					rootDecompiler.getFieldsMap().put(f, javaField);
 				//}
 			}
 			this.fields = Collections.unmodifiableList(flds);
@@ -121,6 +121,16 @@ public final class JavaClass implements JavaNode {
 				mths.add(javaMethod);
 				rootDecompiler.getMethodsMap().put(m, javaMethod);
 				//}
+
+				for (VarNode v : m.getVars()) {
+					JavaVar javaVar = JadxDecompiler.instance.getJavaVarByNode(v);
+					if (null == javaVar) {
+						javaVar = new JavaVar(javaMethod, v);
+						JadxDecompiler.instance.getVarsMap().put(v, javaVar);
+						javaMethod.addVar(javaVar);
+
+					}
+				}
 			}
 			mths.sort(Comparator.comparing(JavaMethod::getName));
 			this.methods = Collections.unmodifiableList(mths);
@@ -180,6 +190,9 @@ public final class JavaClass implements JavaNode {
 			VarNode varNode = (VarNode) obj;
 			JavaVar javaVar = getRootDecompiler().getJavaVarByNode(varNode);
 			if (javaVar != null && javaVar.getMethod() == null) {
+				if (varNode.getMethod().getMethodInfo().toString().equals("com.duiba.component_ad.-$$Lambda$AdUtil$H8YMEtlsph23Ss30jQbjlEUQpak.<init>(com.duiba.component_ad.AdUtil, android.content.Context):void")) {
+					int a = 1;
+				}
 				JavaMethod mth = getRootDecompiler().getJavaMethodByNode(varNode.getMethod());
 				javaVar.setMethod(mth);
 			}
@@ -218,6 +231,11 @@ public final class JavaClass implements JavaNode {
 	}
 
 	@Override
+	public void setName(String name) {
+		cls.getClassInfo().changeShortName(name);
+	}
+
+	@Override
 	public String getName() {
 		return cls.getShortName();
 	}
@@ -230,6 +248,11 @@ public final class JavaClass implements JavaNode {
 	@Override
 	public String getRawFullName() {
 		return cls.getClassInfo().makeRawFullName();
+	}
+
+	@Override
+	public String getAliasFullName() {
+		return cls.getClassInfo().getAliasFullName();
 	}
 
 	public String getPackage() {

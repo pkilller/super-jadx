@@ -48,7 +48,7 @@ public final class VarInfo {
 	}
 
 	public String getFullId() {
-		return declMethod.getFullName() + "->" + name + ':' + TypeGen.signature(type);
+		return declMethod.getFullName() + "->" + alias + ':' + TypeGen.signature(type);
 	}
 
 	public String getRawFullId() {

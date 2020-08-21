@@ -7,6 +7,7 @@ import com.android.dex.FieldId;
 import jadx.core.codegen.TypeGen;
 import jadx.core.dex.instructions.args.ArgType;
 import jadx.core.dex.nodes.DexNode;
+import jadx.core.utils.Utils;
 
 public final class FieldInfo {
 
@@ -66,6 +67,10 @@ public final class FieldInfo {
 
 	public String getRawFullId() {
 		return declClass.makeRawFullName() + '.' + name + ':' + TypeGen.signature(type);
+	}
+
+	public String getAliasFullId() {
+		return declClass.getAliasFullName() + '.' + alias + ':' + TypeGen.signature(type);
 	}
 
 	public boolean isRenamed() {

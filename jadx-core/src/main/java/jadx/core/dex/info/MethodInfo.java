@@ -91,6 +91,10 @@ public final class MethodInfo {
 		return declClass.makeRawFullName() + '.' + shortId;
 	}
 
+	public String getAliasFullId() {
+		return declClass.makeRawFullName() + '.' + getAlias() + '(' + Utils.listToString(args) + "):" + retType;
+	}
+
 	/**
 	 * Method name and signature
 	 */

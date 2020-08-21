@@ -669,6 +669,15 @@ public class MethodNode extends LineAttrNode implements ILoadable, ICodeNode {
 		vars.add(var);
 	}
 
+	public VarNode getVar(String alias) {
+		for (VarNode var : vars) {
+			if (var.getAlias().equals(alias)) {
+				return var;
+			}
+		}
+		return null;
+	}
+
 	public List<VarNode> getVars() {
 		return vars;
 	}

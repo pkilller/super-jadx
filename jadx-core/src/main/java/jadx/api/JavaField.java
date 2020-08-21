@@ -14,6 +14,11 @@ public final class JavaField implements JavaNode {
 		this.parent = cls;
 	}
 
+	@Override
+	public void setName(String name) {
+		field.getFieldInfo().setAlias(name);
+	}
+
 	public FieldNode getFieldNode() {
 		return field;
 	}
@@ -31,6 +36,11 @@ public final class JavaField implements JavaNode {
 	@Override
 	public String getRawFullName() {
 		return field.getFieldInfo().getRawFullId();
+	}
+
+	@Override
+	public String getAliasFullName() {
+		return field.getFieldInfo().getAliasFullId();
 	}
 
 	@Override
