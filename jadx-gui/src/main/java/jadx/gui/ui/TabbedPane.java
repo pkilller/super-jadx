@@ -165,6 +165,19 @@ public class TabbedPane extends JTabbedPane {
 		return openTabs;
 	}
 
+	public void setTitle(JNode jnode, String title) {
+		ContentPanel panel = openTabs.get(jnode);
+		JPanel jpanel = (JPanel) getTabComponentAt(indexOfComponent(panel));
+
+		for (int id = 0; id < jpanel.getComponentCount(); id++) {
+			Component subComponent = jpanel.getComponent(id);
+			if (subComponent instanceof JLabel) {
+				((JLabel)subComponent).setText(title);
+				break;
+			}
+		}
+	}
+
 	@Nullable
 	private ContentPanel makeContentPanel(JNode node) {
 		if (node instanceof JResource) {
