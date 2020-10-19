@@ -12,6 +12,9 @@ import javax.swing.*;
 import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.text.BadLocationException;
 
+import jadx.api.JavaClass;
+import jadx.core.dex.nodes.ClassNode;
+import jadx.core.dex.nodes.ProcessState;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -145,6 +148,16 @@ public class TabbedPane extends JTabbedPane {
 	private void closeCodePanel(ContentPanel contentPanel) {
 		openTabs.remove(contentPanel.getNode());
 		remove(contentPanel);
+
+		// 关闭后，清除已反汇编的java代码，一边下次加载rename的元素时能及时生效
+		clearCompiledJavaCode(((JavaClass) contentPanel.getNode().getJavaNode()).getClassNode());
+	}
+
+	private void clearCompiledJavaCode(ClassNode classNode) {
+		classNode.unload();
+		classNode.setCode(null);
+		classNode.setState(ProcessState.NOT_LOADED);
+		//classNode.load();
 	}
 
 	@Nullable
