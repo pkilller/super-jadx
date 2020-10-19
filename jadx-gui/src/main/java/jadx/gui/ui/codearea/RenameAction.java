@@ -50,6 +50,7 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 		this.contentPanel = contentPanel;
 		this.codeArea = codeArea;
 		this.jCls = jCls;
+		System.out.println("RenameAction()");
 	}
 
 	private void initDeobfuscat() {
@@ -134,7 +135,6 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 		deobfuscator.savePresets(true);
 	}
 
-
 	private String previewFullname(JavaNode node, String newName) {
 		String bakName = node.getName();
 		node.setName(newName);
@@ -148,7 +148,7 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 	public JavaNode lookupNodeByDuplicateName(CacheObject cache, JavaNode node, String newName) {
 		assert cache.getTextIndex() != null;
 
-        // 需要考虑Overvie方法名称，重名的问题
+        // 需要考虑Override方法名称，重名的问题
 
 		TextSearchIndex searchIndex = cache.getTextIndex();
 
@@ -276,13 +276,13 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 
 	private List<MethodNode> findVirtualMethods(MethodNode beginMethod) {
 		List<MethodNode> outOverrideMethods = new ArrayList<>();
-		recursiveFindImplementMethods(beginMethod.getName(), beginMethod.getReturnType(),
+		recursiveFindOverrideMethodsOfInterface(beginMethod.getName(), beginMethod.getReturnType(),
 				beginMethod.getArguments(false), beginMethod.getParentClass(), outOverrideMethods);
 		if (outOverrideMethods.size() > 0) {
 			return outOverrideMethods;
 		}
 
-		recursiveFindOverrideMethods(beginMethod.getName(), beginMethod.getReturnType(),
+		recursiveFindOverrideMethodsOfSuperclass(beginMethod.getName(), beginMethod.getReturnType(),
 				beginMethod.getArguments(false), beginMethod.getParentClass(), outOverrideMethods);
 		if (outOverrideMethods.size() > 0) {
 			return outOverrideMethods;
@@ -290,8 +290,8 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 		return null;
 	}
 
-	private void recursiveFindImplementMethods(String name, ArgType retType, List<RegisterArg> argsNonThis,
-											   ClassNode beginClassNode, List<MethodNode> outOverrideMethods) {
+	private void recursiveFindOverrideMethodsOfInterface(String name, ArgType retType, List<RegisterArg> argsNonThis,
+														 ClassNode beginClassNode, List<MethodNode> outOverrideMethods) {
 		List<ClassNode> impClasses = beginClassNode.getImplements();
 
 		for (ClassNode impClass : impClasses) {
@@ -302,12 +302,12 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 				// has override
 				outOverrideMethods.add(subMethod);
 			}
-			recursiveFindImplementMethods(name, retType, argsNonThis, impClass, outOverrideMethods);
+			recursiveFindOverrideMethodsOfInterface(name, retType, argsNonThis, impClass, outOverrideMethods);
 		}
 	}
 
-	private void recursiveFindOverrideMethods(String name, ArgType retType, List<RegisterArg> argsNonThis,
-			ClassNode beginClassNode, List<MethodNode> outOverrideMethods) {
+	private void recursiveFindOverrideMethodsOfSuperclass(String name, ArgType retType, List<RegisterArg> argsNonThis,
+														  ClassNode beginClassNode, List<MethodNode> outOverrideMethods) {
 		List<ClassNode> subClasses = beginClassNode.getSubClasses();
 
 		for (ClassNode subClass : subClasses) {
@@ -318,7 +318,7 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 				// has override
 				outOverrideMethods.add(subMethod);
 			}
-			recursiveFindOverrideMethods(name, retType, argsNonThis, subClass, outOverrideMethods);
+			recursiveFindOverrideMethodsOfSuperclass(name, retType, argsNonThis, subClass, outOverrideMethods);
 		}
 	}
 
@@ -356,6 +356,8 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 			ScrollPosition pos = area.getScrollPosition();
 			area.reload();
 			area.setScrollPosition(pos);
+
+			mainWin.getTabbedPane().setTitle(jOuterClass, jOuterClass.makeLongString());
 		}
 	}
 
@@ -370,50 +372,67 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 		CacheObject cache = mainWin.getCacheObject();
 
 		// Is caching complete?
-		if (!cache.getIndexJob().isComplete()) {
-			return;
-		}
+
 
 		// usage classes.
+		List<JavaClass> needUpdateClasses = new ArrayList<>();
+
 		List<JavaNode> usageNodes = new ArrayList<>();
-		List<CodeNode> usages = cache.getUsageInfo().getUsageList(jnode);
-		if (usages == null) {
-			return;
+		List<CodeNode> usages = null;
+		if (cache.getIndexJob().isComplete()) {
+			usages = cache.getUsageInfo().getUsageList(jnode);
 		}
-		for (CodeNode usage : usages) {
-			if (!usageNodes.contains(usage.getJavaNode())) {
-				usageNodes.add(usage.getJavaNode());
+		if (usages != null) {
+			for (CodeNode usage : usages) {
+				if (!usageNodes.contains(usage.getJavaNode())) {
+					usageNodes.add(usage.getJavaNode());
+				}
 			}
-		}
 
-		// will be regenerate override methods and usage nodes for the method.
-		if (jnode instanceof JMethod) {
-			List<JavaMethod> overrideMethods = getOverrideMethods((JavaMethod) jnode.getJavaNode());
-			if (overrideMethods != null) {
-				for (JavaMethod mth : overrideMethods) {
-					JNode jmth = mainWin.getCacheObject().getNodeCache().makeFrom(mth);
+			// will be regenerate override methods and usage nodes for the method.
+			if (jnode instanceof JMethod) {
+				List<JavaMethod> overrideMethods = getOverrideMethods((JavaMethod) jnode.getJavaNode());
+				if (overrideMethods != null) {
+					for (JavaMethod mth : overrideMethods) {
+						JNode jmth = mainWin.getCacheObject().getNodeCache().makeFrom(mth);
 
-					// usage classes.
-					List<CodeNode> tmpUsages = cache.getUsageInfo().getUsageList(jmth);
-					if (tmpUsages == null) {
-						return;
-					}
+						// usage classes.
+						List<CodeNode> tmpUsages = cache.getUsageInfo().getUsageList(jmth);
+						if (tmpUsages == null) {
+							return;
+						}
 
-					for (CodeNode usage : tmpUsages) {
-						if (!usageNodes.contains(usage.getJavaNode())) {
-							usageNodes.add(usage.getJavaNode());
+						for (CodeNode usage : tmpUsages) {
+							if (!usageNodes.contains(usage.getJavaNode())) {
+								usageNodes.add(usage.getJavaNode());
+							}
 						}
 					}
 				}
 			}
-		}
 
-		// update clesses
-		List<JavaClass> needUpdateClasses = new ArrayList<>();
-		for (JavaNode usageNode : usageNodes) {
-			JavaClass topClass = usageNode.getTopParentClass();
-			if (!needUpdateClasses.contains(topClass)) {
-				needUpdateClasses.add(topClass);
+			// update clesses
+			for (JavaNode usageNode : usageNodes) {
+				JavaClass topClass = usageNode.getTopParentClass();
+				if (!needUpdateClasses.contains(topClass)) {
+					needUpdateClasses.add(topClass);
+				}
+			}
+
+		} else {
+			Map<JNode, ContentPanel> openTabs = mainWin.getTabbedPane().getOpenTabs();
+			for (Map.Entry<JNode, ContentPanel> entry : openTabs.entrySet()) {
+				ContentPanel panel = entry.getValue();
+				JavaNode topJavaNode =  panel.getNode().getJavaNode();
+				Map<CodePosition, Object> codeAnnotations = ((JavaClass)topJavaNode).getCodeAnnotations();
+				for (Map.Entry<CodePosition, Object> annotation : codeAnnotations.entrySet()) {
+					if (((JavaClass) panel.getNode().getJavaNode()).getClassNode() == annotation.getValue()) {
+						System.out.println("found usage: " + annotation.getValue().toString());
+						needUpdateClasses.add((JavaClass)topJavaNode);
+						break;
+					}
+
+				}
 			}
 		}
 
