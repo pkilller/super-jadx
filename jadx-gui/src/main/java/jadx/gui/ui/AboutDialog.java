@@ -22,17 +22,25 @@ class AboutDialog extends JDialog {
 		URL logoURL = getClass().getResource("/logos/jadx-logo-48px.png");
 		Icon logo = new ImageIcon(logoURL, "jadx logo");
 
-		JLabel name = new JLabel("jadx", logo, SwingConstants.CENTER);
+		JLabel name = new JLabel("super-jadx", logo, SwingConstants.CENTER);
 		name.setFont(font);
 		name.setAlignmentX(0.5f);
 
-		JLabel desc = new JLabel("Dex to Java decompiler");
+		JLabel desc = new JLabel("For Reverse Engineering");
 		desc.setFont(font);
 		desc.setAlignmentX(0.5f);
 
-		JLabel version = new JLabel("jadx version: " + JadxDecompiler.getVersion());
+		JLabel version = new JLabel("super-jadx version: " + JadxDecompiler.getVersion());
 		version.setFont(font);
 		version.setAlignmentX(0.5f);
+
+		JLabel copyright = new JLabel("copyright by pkilller (https://github.com/pkilller)");
+		copyright.setFont(font);
+		copyright.setAlignmentX(0.5f);
+
+		JLabel basedon = new JLabel("based on jadx(@skylot)");
+		basedon.setFont(font);
+		basedon.setAlignmentX(0.5f);
 
 		String javaVm = System.getProperty("java.vm.name");
 		String javaVer = System.getProperty("java.version");
@@ -57,6 +65,10 @@ class AboutDialog extends JDialog {
 		textPane.add(desc);
 		textPane.add(Box.createRigidArea(new Dimension(0, 10)));
 		textPane.add(version);
+		textPane.add(Box.createRigidArea(new Dimension(0, 10)));
+		textPane.add(copyright);
+		textPane.add(Box.createRigidArea(new Dimension(0, 10)));
+		textPane.add(basedon);
 		textPane.add(Box.createRigidArea(new Dimension(0, 20)));
 		textPane.add(javaVmLabel);
 		textPane.add(javaVerLabel);
