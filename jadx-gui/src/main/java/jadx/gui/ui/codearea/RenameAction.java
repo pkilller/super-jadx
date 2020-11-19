@@ -136,11 +136,24 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 	}
 
 	private String previewFullname(JavaNode node, String newName) {
-		String bakName = node.getName();
-		node.setName(newName);
 		String fullName = node.getAliasFullName();
-		node.setName(bakName);
-		return fullName;
+		if (node instanceof JavaClass) {
+			int s = fullName.lastIndexOf(".");
+			return fullName.substring(0, s) + '.' + newName;
+		} else if (node instanceof JavaField) {
+			int s = fullName.lastIndexOf(".");
+			int e = fullName.lastIndexOf(":");
+			String clsFullName = fullName.substring(0, s);
+			String type = fullName.substring(e + 1);
+			return clsFullName + "." + newName + ":" + type;
+		}  else if (node instanceof JavaMethod) {
+			int e = fullName.lastIndexOf("(");
+			int s = fullName.substring(0, e).lastIndexOf(".");
+			String clsFullName = fullName.substring(0, s);
+			String arguments = fullName.substring(e + 1);
+			return clsFullName + "." + newName + "(" + arguments;
+		}
+		return "";
 	}
 
 	// return: existed node or null
@@ -328,7 +341,8 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 
 		MethodNode mth = method.getMethodNode();
 		if (!mth.isVirtual() || mth.isConstructor()) {
-			return null;
+			overrideJMethods.add(method);
+			return overrideJMethods;
 		}
 		// find the same method prototype from top super
 		MethodNode topMethodNode = lookupTopMethod(method.getMethodNode());
@@ -419,6 +433,14 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 				}
 			}
 
+			for (JavaClass jcls : needUpdateClasses) {
+				recompileJavaCode(jcls.getClassNode());
+				rebuildUsage(jcls.getClassNode());
+
+				// refresh code area
+				refreashCodeArea(jcls);
+			}
+
 		} else {
 			Map<JNode, ContentPanel> openTabs = mainWin.getTabbedPane().getOpenTabs();
 			for (Map.Entry<JNode, ContentPanel> entry : openTabs.entrySet()) {
@@ -434,15 +456,15 @@ public final class RenameAction extends AbstractAction implements PopupMenuListe
 
 				}
 			}
+
+			for (JavaClass jcls : needUpdateClasses) {
+				recompileJavaCode(jcls.getClassNode());
+
+				// refresh code area
+				refreashCodeArea(jcls);
+			}
 		}
 
-		for (JavaClass jcls : needUpdateClasses) {
-			recompileJavaCode(jcls.getClassNode());
-			rebuildUsage(jcls.getClassNode());
-
-			// refresh code area
-			refreashCodeArea(jcls);
-		}
 
 
 	}
